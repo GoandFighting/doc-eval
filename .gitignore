@@ -29,10 +29,6 @@ datasets/
 # Default test files
 default/
 
-# Built-in dataset PDFs (large binary files, JSONL is tracked)
-newbench/selected_text/
-newbench/selected_table/
-newbench/selected_layout/
 
 # ParseBench (installed as pip dependency, not vendored)
 ParseBench-main/

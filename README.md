@@ -29,13 +29,6 @@ python -m uvicorn server.app:app --reload --port 8000
 
 浏览器打开 http://localhost:8000
 
-### Docker 部署
-
-```bash
-docker build -t doc-eval .
-docker run -p 8000:8000 doc-eval
-```
-
 ### 命令行评测
 
 ```bash
