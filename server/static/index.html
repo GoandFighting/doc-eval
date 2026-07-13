@@ -606,7 +606,7 @@ let selectedZipFile = null;
 // ── Init: load dataset list ──
 async function init() {
   try {
-    const res = await fetch('/api/datasets');
+    const res = await fetch('/api/evaluation/datasets');
     const data = await res.json();
     datasets = data.datasets || [];
     const sel = document.getElementById('datasetSelect');
@@ -634,7 +634,7 @@ async function onDatasetChange() {
 
 async function loadDatasetInfo(datasetId) {
   try {
-    const res = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/info`);
+    const res = await fetch(`/api/evaluation/datasets/${encodeURIComponent(datasetId)}/info`);
     datasetInfo = await res.json();
     const el = document.getElementById('datasetInfo');
     el.innerHTML = `包含 <span>${datasetInfo.total}</span> 个 PDF`;
@@ -646,7 +646,7 @@ async function loadDatasetInfo(datasetId) {
 // ── Step 1: Download ──
 function downloadDataset() {
   if (!currentDatasetId) return;
-  window.location.href = `/api/datasets/${encodeURIComponent(currentDatasetId)}/download`;
+  window.location.href = `/api/evaluation/datasets/${encodeURIComponent(currentDatasetId)}/download`;
 }
 
 // ── Step 2: Upload ──
@@ -718,7 +718,7 @@ async function startEval() {
     formData.append('files', f);
   }
 
-  const url = `/api/eval/batch?dataset_id=${encodeURIComponent(currentDatasetId)}`;
+  const url = `/api/evaluation/eval/batch?dataset_id=${encodeURIComponent(currentDatasetId)}`;
 
   try {
     const res = await fetch(url, {
@@ -913,7 +913,7 @@ async function uploadDataset() {
   formData.append('file', selectedZipFile);
 
   try {
-    const res = await fetch('/api/datasets/upload', {
+    const res = await fetch('/api/evaluation/datasets/upload', {
       method: 'POST',
       body: formData,
     });
