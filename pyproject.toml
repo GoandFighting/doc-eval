@@ -29,6 +29,9 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["eval"]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
