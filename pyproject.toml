@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "doc-eval"
+version = "0.1.0"
+description = "Document-to-Markdown conversion evaluation module"
+requires-python = ">=3.12"
+dependencies = [
+    "parse-bench @ git+https://github.com/run-llama/ParseBench.git",
+    "pymarkdownlnt",
+]
+
+[project.optional-dependencies]
+semantic = [
+    "sentence-transformers",
+]
+server = [
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.14.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["eval"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short"]

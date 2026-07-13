@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文档转换评测平台</title>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --primary-dark: #1d4ed8;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.header p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Card */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+/* Dataset selector */
+.dataset-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.dataset-selector label {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dataset-selector select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text);
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.dataset-selector select:focus { border-color: var(--primary); }
+
+/* Dataset info */
+.dataset-info {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 10px;
+}
+.dataset-info span { font-weight: 600; color: var(--text); }
+
+/* Upload area */
+.upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-zone .upload-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+.upload-zone .upload-text {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Warning notice */
+.notice {
+  background: var(--warning-light);
+  border-left: 3px solid var(--warning);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.7;
+}
+.notice strong { font-weight: 600; }
+.notice code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+/* File list */
+.file-list {
+  margin-top: 14px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--text-muted);
+}
+.file-item .check { color: var(--success); font-weight: 700; }
+.file-item .x { color: var(--danger); font-weight: 700; }
+.file-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-item .remove {
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  opacity: 0.5;
+}
+.file-item .remove:hover { opacity: 1; }
+
+/* Eval button row */
+.eval-row {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eval-row .file-count {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Loading */
+.loading-overlay {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+}
+.loading-overlay.show { display: block; }
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Results */
+.results-section { display: none; }
+.results-section.show { display: block; }
+
+/* Stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.stat-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.stat-card .stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.stat-card .stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Dimension bars */
+.dim-bars { margin-bottom: 22px; }
+.dim-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.dim-bar-row .dim-name {
+  width: 200px;
+  font-size: 13px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.dim-bar-row .dim-bar-bg {
+  flex: 1;
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dim-bar-row .dim-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  background: linear-gradient(90deg, #60a5fa, var(--primary));
+}
+.dim-bar-row .dim-score {
+  width: 50px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Results table */
+.results-table-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.results-table th {
+  background: #f8fafc;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.results-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.results-table tr:last-child td { border-bottom: none; }
+.results-table tr:hover { background: #f8fafc; }
+.results-table .pdf-name {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 12px;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.score-cell { font-weight: 600; }
+.score-high { color: var(--success); }
+.score-mid { color: var(--warning); }
+.score-low { color: var(--danger); }
+.score-na { color: var(--text-muted); font-weight: 400; }
+
+/* Error list */
+.error-list {
+  background: var(--danger-light);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.error-list h4 {
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.error-list .error-item {
+  font-size: 13px;
+  color: #991b1b;
+  font-family: "SF Mono", "Fira Code", monospace;
+  padding: 3px 0;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 28px;
+  width: 420px;
+  max-width: 90vw;
+}
+.modal h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.modal .form-group {
+  margin-bottom: 16px;
+}
+.modal .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.modal .form-group input[type="text"] {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.modal .form-group input[type="text"]:focus { border-color: var(--primary); }
+.modal .form-group .hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.modal .zip-drop {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+.modal .zip-drop:hover { border-color: var(--primary); background: var(--primary-light); }
+.modal .zip-drop .zip-name {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 6px;
+  word-break: break-all;
+}
+.modal .zip-clear {
+  display: none;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--danger);
+  cursor: pointer;
+  user-select: none;
+}
+.modal .zip-clear:hover { text-decoration: underline; }
+.modal .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.modal .modal-msg {
+  font-size: 13px;
+  margin-top: 10px;
+  min-height: 18px;
+}
+.modal .modal-msg.error { color: var(--danger); }
+.modal .modal-msg.success { color: var(--success); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .dim-bar-row .dim-name { width: 120px; font-size: 12px; }
+  .container { padding: 20px 12px; }
+  .card { padding: 20px; }
+  .dataset-selector { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>文档转换评测平台</h1>
+    <p>Document-to-Markdown Conversion Evaluation</p>
+  </div>
+
+  <!-- Step 1: Select Dataset & Download -->
+  <div class="card">
+    <div class="card-title">
+      <span class="step-num">1</span>
+      选择数据集 &amp; 下载 PDF
+    </div>
+    <div class="dataset-selector">
+      <label>数据集</label>
+      <select id="datasetSelect" onchange="onDatasetChange()"></select>
+      <button class="btn btn-outline btn-sm" onclick="openUploadModal()">+ 上传自定义数据集</button>
+    </div>
+    <button class="btn btn-primary" id="downloadBtn" onclick="downloadDataset()">
+      下载 PDF 数据集 (.zip)
+    </button>
+    <div class="dataset-info" id="datasetInfo">正在加载数据集信息...</div>
+  </div>
+
+  <!-- Step 2: Upload Markdown -->
+  <div class="card">
+    <div class="card-title">
+      <span class="step-num">2</span>
+      上传转换后的 Markdown 文件
+    </div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">&#128196;</div>
+      <div class="upload-text">拖拽 .md 文件到此处，或点击选择文件</div>
+      <input type="file" id="fileInput" multiple accept=".md,.markdown,.txt" style="display:none" onchange="onFileSelect(this)">
+    </div>
+    <div class="notice">
+      <strong>&#9888; 提示：</strong>转换后的 Markdown 文件名需与原 PDF 文件名保持一致（仅后缀不同），<br>
+      例如：<code>text_simple__10k.pdf</code> &rarr; <code>text_simple__10k.md</code>
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div class="eval-row">
+      <button class="btn btn-primary" id="evalBtn" onclick="startEval()" disabled>
+        开始评测
+      </button>
+      <span class="file-count" id="fileCount"></span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="card loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p id="loadingText">正在评测，请稍候...</p>
+  </div>
+
+  <!-- Step 3: Results -->
+  <div class="card results-section" id="resultsSection">
+    <div class="card-title">
+      <span class="step-num">3</span>
+      评测结果
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="dim-bars" id="dimBars"></div>
+
+    <div class="error-list" id="errorList" style="display:none"></div>
+
+    <div class="results-table-wrap">
+      <table class="results-table" id="resultsTable">
+        <thead>
+          <tr id="resultsHead">
+            <th>PDF 文件名</th>
+            <th>总分</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <button class="btn btn-outline" onclick="downloadReport()">
+      下载完整报告 (JSON)
+    </button>
+  </div>
+
+</div>
+
+<!-- Upload Dataset Modal -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <h3>上传自定义数据集</h3>
+    <div class="form-group">
+      <label>数据集名称</label>
+      <input type="text" id="datasetNameInput" placeholder="my_dataset">
+      <div class="hint">仅允许字母、数字、下划线、连字符、中文</div>
+    </div>
+    <div class="form-group">
+      <label>ZIP 文件（含 .jsonl 文件，可选 PDF）</label>
+      <div class="zip-drop" id="zipDrop" onclick="document.getElementById('zipInput').click()">
+        <div style="font-size:24px">&#128230;</div>
+        <div class="zip-name" id="zipName">点击选择 .zip 文件</div>
+        <div class="zip-clear" id="zipClear" onclick="clearZipFile(event)">&#215; 删除文件</div>
+        <input type="file" id="zipInput" accept=".zip" style="display:none" onchange="onZipSelect(this)">
+      </div>
+    </div>
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeUploadModal()">取消</button>
+      <button class="btn btn-primary" id="uploadDatasetBtn" onclick="uploadDataset()" disabled>上传</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedFiles = [];
+let datasets = [];
+let currentDatasetId = null;
+let datasetInfo = null;
+let lastResult = null;
+let selectedZipFile = null;
+
+// ── Init: load dataset list ──
+async function init() {
+  try {
+    const res = await fetch('/api/datasets');
+    const data = await res.json();
+    datasets = data.datasets || [];
+    const sel = document.getElementById('datasetSelect');
+    sel.innerHTML = datasets.map(d =>
+      `<option value="${d.id}">${d.name}${d.is_builtin ? ' (内置)' : ''} — ${d.pdf_count} PDFs</option>`
+    ).join('');
+    if (datasets.length > 0) {
+      currentDatasetId = datasets[0].id;
+      sel.value = currentDatasetId;
+      await loadDatasetInfo(currentDatasetId);
+    } else {
+      document.getElementById('datasetInfo').textContent = '无可用数据集';
+    }
+  } catch (e) {
+    document.getElementById('datasetInfo').textContent = '数据集列表加载失败';
+  }
+}
+init();
+
+async function onDatasetChange() {
+  const sel = document.getElementById('datasetSelect');
+  currentDatasetId = sel.value;
+  await loadDatasetInfo(currentDatasetId);
+}
+
+async function loadDatasetInfo(datasetId) {
+  try {
+    const res = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/info`);
+    datasetInfo = await res.json();
+    const el = document.getElementById('datasetInfo');
+    el.innerHTML = `包含 <span>${datasetInfo.total}</span> 个 PDF`;
+  } catch (e) {
+    document.getElementById('datasetInfo').textContent = '数据集信息加载失败';
+  }
+}
+
+// ── Step 1: Download ──
+function downloadDataset() {
+  if (!currentDatasetId) return;
+  window.location.href = `/api/datasets/${encodeURIComponent(currentDatasetId)}/download`;
+}
+
+// ── Step 2: Upload ──
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+function onFileSelect(input) {
+  handleFiles(input.files);
+  input.value = '';
+}
+
+function handleFiles(files) {
+  for (const f of files) {
+    if (!selectedFiles.some(s => s.name === f.name)) {
+      selectedFiles.push(f);
+    }
+  }
+  renderFileList();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  const count = document.getElementById('fileCount');
+  const btn = document.getElementById('evalBtn');
+
+  if (selectedFiles.length === 0) {
+    list.innerHTML = '';
+    count.textContent = '';
+    btn.disabled = true;
+    return;
+  }
+
+  list.innerHTML = selectedFiles.map((f, i) =>
+    `<div class="file-item">
+      <span class="check">&#10003;</span>
+      <span class="name">${f.name}</span>
+      <span class="remove" onclick="removeFile(${i})">&#215;</span>
+    </div>`
+  ).join('');
+
+  count.textContent = `已选 ${selectedFiles.length} 个文件`;
+  btn.disabled = false;
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderFileList();
+}
+
+// ── Start Evaluation ──
+async function startEval() {
+  const btn = document.getElementById('evalBtn');
+  const overlay = document.getElementById('loadingOverlay');
+  const resultsSection = document.getElementById('resultsSection');
+
+  btn.disabled = true;
+  btn.textContent = '评测中...';
+  overlay.classList.add('show');
+  resultsSection.classList.remove('show');
+
+  const formData = new FormData();
+  for (const f of selectedFiles) {
+    formData.append('files', f);
+  }
+
+  const url = `/api/eval/batch?dataset_id=${encodeURIComponent(currentDatasetId)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    lastResult = await res.json();
+    renderResults(lastResult);
+  } catch (e) {
+    alert('评测请求失败: ' + e.message);
+  } finally {
+    overlay.classList.remove('show');
+    btn.disabled = false;
+    btn.textContent = '开始评测';
+  }
+}
+
+// ── Render Results ──
+function renderResults(data) {
+  const section = document.getElementById('resultsSection');
+  section.classList.add('show');
+
+  // Stat cards
+  const total = data.total || 0;
+  const evaluated = data.evaluated || 0;
+  const failed = data.failed || 0;
+  const avg = data.summary?.avg_overall || 0;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${avg.toFixed(1)}</div><div class="stat-label">平均分</div></div>
+    <div class="stat-card"><div class="stat-value">${evaluated}</div><div class="stat-label">成功</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:${failed > 0 ? 'var(--danger)' : 'var(--text)'}">${failed}</div><div class="stat-label">失败</div></div>
+    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">总数</div></div>
+  `;
+
+  // Dimension labels (shared by bars and table)
+  const dimAvg = data.summary?.dimension_avg || {};
+  const dimLabels = {
+    content_faithfulness: '内容准确性',
+    semantic_formatting: '格式保真度',
+    tables: '表格',
+    format_quality: '格式质量',
+    semantic: '语义相似度',
+  };
+
+  // Dimension bars
+  let barsHtml = '';
+  for (const [dim, score] of Object.entries(dimAvg)) {
+    const label = dimLabels[dim] || dim;
+    const pct = Math.max(0, Math.min(100, score));
+    barsHtml += `
+      <div class="dim-bar-row">
+        <span class="dim-name">${label}</span>
+        <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${pct}%"></div></div>
+        <span class="dim-score">${score.toFixed(1)}</span>
+      </div>`;
+  }
+  document.getElementById('dimBars').innerHTML = barsHtml;
+
+  // Error list
+  const errors = data.errors || [];
+  const errorList = document.getElementById('errorList');
+  if (errors.length > 0) {
+    errorList.style.display = 'block';
+    errorList.innerHTML = `<h4>&#9888; 失败 (${errors.length})</h4>` +
+      errors.map(e => `<div class="error-item">${e.pdf_name} — ${e.error}</div>`).join('');
+  } else {
+    errorList.style.display = 'none';
+  }
+
+  // Results table — dynamic columns from dimension keys
+  const dimKeys = Object.keys(dimAvg);
+
+  // Build header
+  let headHtml = '<th>PDF 文件名</th><th>总分</th>';
+  for (const dim of dimKeys) {
+    headHtml += `<th>${dimLabels[dim] || dim}</th>`;
+  }
+  document.getElementById('resultsHead').innerHTML = headHtml;
+
+  // Build body
+  const results = data.results || [];
+  const body = document.getElementById('resultsBody');
+  body.innerHTML = results.map(r => {
+    const dims = {};
+    for (const d of (r.dimensions || [])) {
+      dims[d.dimension] = d.score;
+    }
+    let cells = `<td class="pdf-name" title="${r.pdf_name}">${r.pdf_name}</td>`;
+    cells += `<td class="score-cell ${scoreClass(r.overall_score)}">${r.overall_score.toFixed(1)}</td>`;
+    for (const dim of dimKeys) {
+      cells += `<td class="${scoreCellClass(dims[dim])}">${fmtScore(dims[dim])}</td>`;
+    }
+    return `<tr>${cells}</tr>`;
+  }).join('');
+}
+
+function scoreClass(s) {
+  if (s >= 80) return 'score-high';
+  if (s >= 60) return 'score-mid';
+  return 'score-low';
+}
+function scoreCellClass(s) {
+  if (s === undefined || s === null) return 'score-na';
+  return 'score-cell ' + scoreClass(s);
+}
+function fmtScore(s) {
+  if (s === undefined || s === null) return '—';
+  return s.toFixed(1);
+}
+
+// ── Download Report ──
+function downloadReport() {
+  if (!lastResult) return;
+  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'eval_report.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Upload Custom Dataset Modal ──
+function openUploadModal() {
+  document.getElementById('uploadModal').classList.add('show');
+  document.getElementById('modalMsg').textContent = '';
+  document.getElementById('modalMsg').className = 'modal-msg';
+  document.getElementById('datasetNameInput').value = '';
+  document.getElementById('zipName').textContent = '点击选择 .zip 文件';
+  document.getElementById('zipClear').style.display = 'none';
+  selectedZipFile = null;
+  document.getElementById('uploadDatasetBtn').disabled = true;
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').classList.remove('show');
+}
+
+const zipDrop = document.getElementById('zipDrop');
+zipDrop.addEventListener('dragover', e => { e.preventDefault(); zipDrop.style.borderColor = 'var(--primary)'; });
+zipDrop.addEventListener('dragleave', () => { zipDrop.style.borderColor = '#cbd5e1'; });
+zipDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  zipDrop.style.borderColor = '#cbd5e1';
+  if (e.dataTransfer.files.length > 0) {
+    document.getElementById('zipInput').files = e.dataTransfer.files;
+    onZipSelect({ files: e.dataTransfer.files });
+  }
+});
+
+function onZipSelect(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  selectedZipFile = f;
+  document.getElementById('zipName').textContent = f.name;
+  document.getElementById('zipClear').style.display = 'block';
+  checkUploadReady();
+}
+
+function clearZipFile(e) {
+  e.stopPropagation();
+  selectedZipFile = null;
+  document.getElementById('zipName').textContent = '点击选择 .zip 文件';
+  document.getElementById('zipClear').style.display = 'none';
+  document.getElementById('zipInput').value = '';
+  checkUploadReady();
+}
+
+document.getElementById('datasetNameInput').addEventListener('input', checkUploadReady);
+
+function checkUploadReady() {
+  const name = document.getElementById('datasetNameInput').value.trim();
+  const ready = name && selectedZipFile;
+  document.getElementById('uploadDatasetBtn').disabled = !ready;
+}
+
+async function uploadDataset() {
+  const name = document.getElementById('datasetNameInput').value.trim();
+  const msg = document.getElementById('modalMsg');
+  const btn = document.getElementById('uploadDatasetBtn');
+
+  if (!name || !selectedZipFile) return;
+
+  btn.disabled = true;
+  btn.textContent = '上传中...';
+  msg.className = 'modal-msg';
+  msg.textContent = '';
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('file', selectedZipFile);
+
+  try {
+    const res = await fetch('/api/datasets/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (res.ok && !data.error) {
+      msg.className = 'modal-msg success';
+      msg.textContent = `数据集 "${data.name}" 上传成功 (${data.pdf_count} PDFs)`;
+      // Refresh dataset list
+      await init();
+      // Select the new dataset
+      const sel = document.getElementById('datasetSelect');
+      sel.value = data.id;
+      currentDatasetId = data.id;
+      await loadDatasetInfo(data.id);
+      setTimeout(closeUploadModal, 1200);
+    } else {
+      msg.className = 'modal-msg error';
+      msg.textContent = data.error || '上传失败';
+    }
+  } catch (e) {
+    msg.className = 'modal-msg error';
+    msg.textContent = '请求失败: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '上传';
+  }
+}
+</script>
+</body>
+</html>

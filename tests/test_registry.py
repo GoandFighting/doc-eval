@@ -1,0 +1,134 @@
+"""Tests for DatasetRegistry."""
+
+from __future__ import annotations
+
+import json
+import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from eval.core.registry import DatasetRegistry
+
+
+def _make_test_case(pdf_name: str = "test_doc.pdf") -> dict:
+    """Create a minimal valid ParseBench test case."""
+    return {
+        "pdf": f"docs/text/{pdf_name}",
+        "category": "text_content",
+        "id": f"{Path(pdf_name).stem}_is_header_1",
+        "type": "is_header",
+        "rule": json.dumps({"text": "Test Header"}),
+        "page": None,
+        "expected_markdown": None,
+        "tags": ["simple", "easy"],
+    }
+
+
+def _write_jsonl(path: Path, cases: list[dict]) -> None:
+    """Write test cases to a JSONL file."""
+    with open(path, "w", encoding="utf-8") as f:
+        for tc in cases:
+            f.write(json.dumps(tc, ensure_ascii=False) + "\n")
+
+
+@pytest.fixture
+def temp_dirs():
+    """Create temp builtin and user dirs with a minimal dataset."""
+    tmp = Path(tempfile.mkdtemp(prefix="registry_test_"))
+    builtin_dir = tmp / "newbench"
+    user_dir = tmp / "datasets"
+    builtin_dir.mkdir()
+
+    _write_jsonl(builtin_dir / "text_content.jsonl", [_make_test_case()])
+
+    yield builtin_dir, user_dir
+
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
+@pytest.fixture
+def registry(temp_dirs):
+    builtin_dir, user_dir = temp_dirs
+    return DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+
+
+def _make_dataset_dir(base: Path, name: str, pdf_name: str = "custom.pdf") -> Path:
+    """Create a dataset directory with a valid JSONL file."""
+    ds_path = base / name
+    ds_path.mkdir(parents=True)
+    _write_jsonl(ds_path / "text_content.jsonl", [_make_test_case(pdf_name)])
+    return ds_path
+
+
+class TestDatasetRegistry:
+    def test_builtin_loaded_on_init(self, registry):
+        """Built-in dataset should be loaded automatically."""
+        entry = registry.get("newbench")
+        assert entry is not None
+        assert entry.is_builtin is True
+        assert entry.name == "newbench"
+
+    def test_list_all_returns_builtin_first(self, registry):
+        """list_all should return built-in datasets first."""
+        all_ds = registry.list_all()
+        assert len(all_ds) >= 1
+        assert all_ds[0].is_builtin is True
+
+    def test_register_new_dataset(self, registry, temp_dirs):
+        """Register a new user dataset."""
+        _, user_dir = temp_dirs
+        ds_path = _make_dataset_dir(user_dir, "my_set", "custom.pdf")
+
+        entry = registry.register(name="my_set", path=ds_path)
+        assert entry.id == "my_set"
+        assert entry.is_builtin is False
+        assert "custom.pdf" in entry.runner.available_pdfs
+
+    def test_register_duplicate_name_raises(self, registry):
+        """Registering a duplicate name should raise ValueError."""
+        with pytest.raises(ValueError, match="already exists"):
+            registry.register(name="newbench", path=Path("."))
+
+    def test_register_invalid_name_raises(self, registry, temp_dirs):
+        """Invalid dataset names should be rejected."""
+        _, user_dir = temp_dirs
+        ds_path = _make_dataset_dir(user_dir, "test_invalid", "x.pdf")
+
+        with pytest.raises(ValueError, match="must contain only"):
+            registry.register(name="bad/name!", path=ds_path)
+
+    def test_get_nonexistent_returns_none(self, registry):
+        """Getting an unknown ID should return None."""
+        assert registry.get("nonexistent") is None
+
+    def test_to_dict(self, registry):
+        """to_dict should include id, name, is_builtin, pdf_count."""
+        entry = registry.get("newbench")
+        d = entry.to_dict()
+        assert d["id"] == "newbench"
+        assert d["name"] == "newbench"
+        assert d["is_builtin"] is True
+        assert isinstance(d["pdf_count"], int)
+
+    def test_user_dir_property(self, registry, temp_dirs):
+        """user_dir property should return the user directory path."""
+        _, user_dir = temp_dirs
+        assert registry.user_dir == user_dir
+
+    def test_user_dataset_persisted_on_reload(self, temp_dirs):
+        """User datasets should be reloaded when registry is recreated."""
+        builtin_dir, user_dir = temp_dirs
+
+        # First instance: register a user dataset
+        r1 = DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+        ds_path = _make_dataset_dir(user_dir, "persist_test", "persist.pdf")
+        r1.register(name="persist_test", path=ds_path)
+
+        # Second instance: should auto-load the user dataset
+        r2 = DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+        entry = r2.get("persist_test")
+        assert entry is not None
+        assert entry.is_builtin is False
+        assert "persist.pdf" in entry.runner.available_pdfs

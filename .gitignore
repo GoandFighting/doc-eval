@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.opencode/
+
+# User-uploaded datasets (runtime data, not source code)
+datasets/
+
+# Default test files
+default/
+
+# Built-in dataset PDFs (large binary files, JSONL is tracked)
+newbench/selected_text/
+newbench/selected_table/
+newbench/selected_layout/
+
+# ParseBench (installed as pip dependency, not vendored)
+ParseBench-main/
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Environment
+.env
+.env.local
+
+# OpenSpec (workflow config, not application code)
+openspec/
+
+# Temporary / scratch files
+test_api*.py
+test_debug.py
+result.md

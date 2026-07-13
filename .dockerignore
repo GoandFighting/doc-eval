@@ -1,0 +1,13 @@
+.git
+.gitignore
+.opencode/
+.pytest_cache/
+.ruff_cache/
+datasets/
+default/
+ParseBench-main/
+openspec/
+tests/
+*.md
+Dockerfile
+.dockerignore
