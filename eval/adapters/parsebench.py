@@ -131,11 +131,18 @@ class ParseBenchAdapter:
 
         Only ParseTestCase instances are kept; LayoutDetectionTestCase is
         skipped (Visual Grounding dimension requires bbox output).
+
+        Additionally, ParseTestCase entries whose ``test_id`` starts with
+        ``layout/`` are excluded -- these are ``order``-type rules from
+        ``layout.jsonl`` that ParseBench loads as ParseTestCase but which
+        belong to the layout dimension, not text/table evaluation.
         """
         all_cases = load_test_cases(root_dir=dataset_dir)
         grouped: dict[str, list[ParseTestCase]] = {}
         for tc in all_cases:
             if not isinstance(tc, ParseTestCase):
+                continue
+            if tc.test_id.startswith("layout/"):
                 continue
             pdf_name = tc.file_path.name
             grouped.setdefault(pdf_name, []).append(tc)

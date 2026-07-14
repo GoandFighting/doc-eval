@@ -6,68 +6,138 @@
 <title>文档转换评测平台</title>
 <style>
 :root {
-  --bg: #f5f7fa;
+  --bg: #f3f6fa;
   --card: #ffffff;
-  --primary: #2563eb;
-  --primary-light: #dbeafe;
-  --primary-dark: #1d4ed8;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
+  --primary: #2254d1;
+  --primary-light: #e8efff;
+  --primary-dark: #173b9b;
+  --text: #172033;
+  --text-muted: #68758a;
+  --border: #dfe5ee;
   --success: #16a34a;
   --success-light: #dcfce7;
   --warning: #d97706;
   --warning-light: #fef3c7;
   --danger: #dc2626;
   --danger-light: #fee2e2;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.055);
+  --shadow-lg: 0 24px 60px rgba(15,23,42,.16);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(34,84,209,.08), transparent 32rem),
+    linear-gradient(180deg, #f8fafc 0, var(--bg) 280px);
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 54px 24px 80px;
 }
 
 /* Header */
 .header {
-  text-align: center;
-  margin-bottom: 36px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 28px;
+  padding: 0 4px;
 }
+.header-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.header-kicker::before { width: 22px; height: 2px; background: var(--primary); content: ''; }
 .header h1 {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 760;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  letter-spacing: -.035em;
+  line-height: 1.12;
 }
 .header p {
   color: var(--text-muted);
   font-size: 14px;
+  max-width: 620px;
+}
+.header-facts {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 10px;
+  flex-shrink: 0;
+}
+.header-fact {
+  min-width: 116px;
+  padding: 13px 15px;
+  border: 1px solid rgba(210,219,232,.9);
+  border-radius: 11px;
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(10px);
+}
+.header-fact strong { display: block; font-size: 15px; }
+.header-fact span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 10px; }
+.workflow-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.8);
+  box-shadow: 0 1px 2px rgba(15,23,42,.03);
+}
+.workflow-overview-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+}
+.workflow-overview-item + .workflow-overview-item { border-left: 1px solid var(--border); }
+.workflow-overview-item + .workflow-overview-item::before {
+  position: absolute;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: #fff;
+  transform: rotate(45deg);
+  content: '';
+}
+.workflow-overview-index { color: var(--primary); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.workflow-overview-item strong { display: block; font-size: 12px; }
+.workflow-overview-item span:last-child { display: block; color: var(--text-muted); font-size: 10px; }
 }
 
 /* Card */
 .card {
   background: var(--card);
+  border: 1px solid rgba(219,226,236,.92);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 28px;
-  margin-bottom: 20px;
+  padding: 30px;
+  margin-bottom: 22px;
 }
 .card-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   margin-bottom: 18px;
   display: flex;
   align-items: center;
@@ -77,119 +147,180 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
   flex-shrink: 0;
 }
+.workflow-card {
+  position: relative;
+  margin-bottom: 34px;
+}
+.workflow-card::before {
+  position: absolute;
+  top: 28px;
+  bottom: 28px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--primary);
+  content: '';
+}
+.section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.section-heading .card-title { margin-bottom: 5px; }
+.card-description { margin: 0 0 22px 40px; color: var(--text-muted); font-size: 12px; }
 
 /* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 22px;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 18px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 650;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
   text-decoration: none;
 }
 .btn-primary {
   background: var(--primary);
   color: #fff;
+  box-shadow: 0 5px 14px rgba(34,84,209,.2);
 }
-.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:hover { background: var(--primary-dark); box-shadow: 0 7px 18px rgba(34,84,209,.26); transform: translateY(-1px); }
 .btn-primary:disabled {
   background: #94a3b8;
   cursor: not-allowed;
 }
 .btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--border);
+  background: #fff;
+  border: 1px solid var(--border);
   color: var(--text);
 }
-.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-outline:hover { border-color: #9eb4eb; color: var(--primary); background: #f8faff; }
 .btn-sm {
-  padding: 6px 14px;
-  font-size: 13px;
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 /* Dataset selector */
 .dataset-selector {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #f8fafc;
 }
 .dataset-selector label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   white-space: nowrap;
 }
 .dataset-selector select {
   flex: 1;
-  padding: 8px 12px;
-  border: 1.5px solid var(--border);
+  min-height: 38px;
+  padding: 8px 34px 8px 12px;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text);
   background: #fff;
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;
 }
-.dataset-selector select:focus { border-color: var(--primary); }
+.dataset-selector select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(34,84,209,.1); }
+.dataset-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 
 /* Dataset info */
 .dataset-info {
   color: var(--text-muted);
   font-size: 13px;
-  margin-top: 10px;
+  margin: 0 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #f1f5f9;
 }
 .dataset-info span { font-weight: 600; color: var(--text); }
 
 /* Upload area */
 .upload-zone {
-  border: 2px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 36px 20px;
+  position: relative;
+  overflow: hidden;
+  border: 1.5px dashed #b9c5d7;
+  border-radius: 12px;
+  padding: 34px 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #fbfcfe, #f5f8fc);
+}
+.upload-zone::after {
+  position: absolute;
+  right: -35px;
+  bottom: -55px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(34,84,209,.05);
+  content: '';
 }
 .upload-zone:hover, .upload-zone.dragover {
   border-color: var(--primary);
   background: var(--primary-light);
 }
 .upload-zone .upload-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 52px;
+  margin-bottom: 12px;
+  border: 1px solid #bfd0f4;
+  border-radius: 8px;
+  color: var(--primary);
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(34,84,209,.1);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 800;
 }
 .upload-zone .upload-text {
-  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+  color: var(--text);
   font-size: 14px;
+  font-weight: 650;
 }
+.upload-zone .upload-hint { position: relative; z-index: 1; margin-top: 4px; color: var(--text-muted); font-size: 11px; }
 
 /* Warning notice */
 .notice {
-  background: var(--warning-light);
-  border-left: 3px solid var(--warning);
-  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-left: 3px solid #90a4c4;
+  border-radius: 8px;
   padding: 12px 16px;
   margin-top: 14px;
   font-size: 13px;
-  color: #92400e;
+  color: var(--text-muted);
   line-height: 1.7;
 }
-.notice strong { font-weight: 600; }
+.notice strong { color: var(--text); font-weight: 650; }
 .notice code {
   background: rgba(0,0,0,0.06);
   padding: 1px 5px;
@@ -199,8 +330,19 @@ body {
 }
 
 /* File list */
-.file-list {
+.file-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 14px;
+  margin-bottom: 6px;
+}
+.file-list-header span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.file-list {
   max-height: 200px;
   overflow-y: auto;
 }
@@ -209,7 +351,8 @@ body {
   align-items: center;
   gap: 8px;
   padding: 7px 12px;
-  border-radius: 6px;
+  border-bottom: 1px solid #eef2f7;
+  border-radius: 0;
   font-size: 13px;
   font-family: "SF Mono", "Fira Code", monospace;
   color: var(--text-muted);
@@ -232,7 +375,9 @@ body {
   margin-top: 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding-top: 17px;
+  border-top: 1px solid #edf1f6;
 }
 .eval-row .file-count {
   font-size: 13px;
@@ -273,21 +418,23 @@ body {
   margin-bottom: 22px;
 }
 .stat-card {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 16px 14px;
-  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  text-align: left;
 }
 .stat-card .stat-value {
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 760;
   color: var(--text);
   line-height: 1.2;
 }
 .stat-card .stat-label {
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 5px;
+  letter-spacing: .03em;
 }
 
 /* Dimension bars */
@@ -296,7 +443,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .dim-bar-row .dim-name {
   width: 200px;
@@ -306,14 +453,14 @@ body {
 }
 .dim-bar-row .dim-bar-bg {
   flex: 1;
-  height: 20px;
+  height: 10px;
   background: #f1f5f9;
-  border-radius: 4px;
+  border-radius: 999px;
   overflow: hidden;
 }
 .dim-bar-row .dim-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 999px;
   transition: width 0.6s ease;
   background: linear-gradient(90deg, #60a5fa, var(--primary));
 }
@@ -328,7 +475,7 @@ body {
 /* Results table */
 .results-table-wrap {
   overflow-x: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   margin-bottom: 18px;
 }
@@ -338,8 +485,8 @@ body {
   font-size: 13px;
 }
 .results-table th {
-  background: #f8fafc;
-  padding: 10px 14px;
+  background: #f3f6fa;
+  padding: 11px 14px;
   text-align: left;
   font-weight: 600;
   color: var(--text-muted);
@@ -347,7 +494,7 @@ body {
   white-space: nowrap;
 }
 .results-table td {
-  padding: 9px 14px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f1f5f9;
 }
 .results-table tr:last-child td { border-bottom: none; }
@@ -390,7 +537,8 @@ body {
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(15,23,42,.52);
+  backdrop-filter: blur(4px);
   z-index: 1000;
   align-items: center;
   justify-content: center;
@@ -400,13 +548,13 @@ body {
   background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  padding: 28px;
-  width: 420px;
+  padding: 30px;
+  width: 460px;
   max-width: 90vw;
 }
 .modal h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 720;
   margin-bottom: 18px;
 }
 .modal .form-group {
@@ -472,61 +620,530 @@ body {
 .modal .modal-msg.error { color: var(--danger); }
 .modal .modal-msg.success { color: var(--success); }
 
+/* Leaderboard */
+.leaderboard-card {
+  position: relative;
+  overflow: visible;
+  margin-bottom: 34px;
+}
+.lb-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.lb-heading .card-title { margin-bottom: 3px; }
+.lb-subtitle { color: var(--text-muted); font-size: 12px; }
+.lb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.lb-meta { display: flex; flex-wrap: wrap; gap: 7px; }
+.lb-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 2px 8px;
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: #fff;
+  font-size: 11px;
+}
+.lb-sort-wrap { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.lb-sort-wrap label { color: var(--text-muted); font-size: 12px; }
+.lb-sort {
+  min-width: 118px;
+  padding: 6px 28px 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+}
+.lb-scale {
+  display: grid;
+  grid-template-columns: 42px minmax(145px, 1.15fr) minmax(200px, 2fr) 70px 86px 64px;
+  gap: 10px;
+  align-items: end;
+  padding: 0 12px 6px;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.lb-scale-axis { display: flex; justify-content: space-between; }
+.lb-list { border-top: 1px solid var(--border); }
+.lb-item { border-bottom: 1px solid var(--border); }
+.lb-main {
+  display: grid;
+  grid-template-columns: 42px minmax(145px, 1.15fr) minmax(200px, 2fr) 70px 86px 64px;
+  gap: 10px;
+  align-items: center;
+  min-height: 70px;
+  padding: 11px 12px;
+  transition: background .15s ease;
+}
+.lb-item:hover .lb-main { background: #f8fafc; }
+.lb-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: #f1f5f9;
+  font-size: 13px;
+  font-weight: 800;
+}
+.lb-rank.gold { color: #8a5a00; background: #fef3c7; }
+.lb-rank.silver { color: #52606d; background: #e8edf2; }
+.lb-rank.bronze { color: #8a431f; background: #f6dfd0; }
+.lb-tool { min-width: 0; }
+.lb-name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-tool-version, .lb-delta { color: var(--text-muted); font-size: 10px; }
+.lb-performance { min-width: 0; }
+.lb-bar-bg {
+  position: relative;
+  height: 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eef5;
+}
+.lb-bar-bg::before, .lb-bar-bg::after {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(100,116,139,.35);
+  content: '';
+}
+.lb-bar-bg::before { left: 60%; }
+.lb-bar-bg::after { left: 80%; }
+.lb-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #60a5fa, var(--primary));
+  transition: width .45s ease;
+}
+.lb-bar-fill.ineligible { background: #94a3b8; }
+.lb-score { font-size: 17px; font-weight: 750; text-align: right; }
+.lb-score small { display: block; color: var(--text-muted); font-size: 9px; font-weight: 500; }
+.lb-coverage { text-align: center; }
+.lb-coverage strong { display: block; color: var(--success); font-size: 13px; }
+.lb-coverage.warn strong { color: var(--danger); }
+.lb-coverage span { color: var(--text-muted); font-size: 9px; }
+.lb-expand {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--primary);
+  background: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lb-expand:hover, .lb-expand:focus-visible { border-color: var(--primary); outline: none; }
+.lb-detail { padding: 2px 12px 16px 64px; background: #fbfdff; }
+.lb-detail[hidden] { display: none; }
+.lb-detail-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 14px;
+}
+.lb-detail-section {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+.lb-detail-title { margin-bottom: 8px; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.lb-heatmap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.lb-heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.lb-heat-cell strong { font-size: 13px; }
+.lb-stat-row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-size: 11px; }
+.lb-stat-row:last-child { margin-bottom: 0; }
+.lb-stat-row span:first-child { color: var(--text-muted); }
+.lb-close {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #dbeafe;
+  font-size: 9px;
+}
+.lb-errors { margin-top: 10px; color: var(--danger); font-size: 10px; }
+.lb-empty { padding: 28px; color: var(--text-muted); font-size: 13px; text-align: center; }
+
+/* Tooltip */
+.tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #9ba8ba;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.tooltip:hover { border-color: var(--primary); color: var(--primary); }
+.tooltip-text {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 12px 16px;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+  border-radius: 8px;
+  white-space: normal;
+  width: min(340px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 20000;
+  box-shadow: 0 16px 32px rgba(15,23,42,.2);
+}
+.tooltip.is-open .tooltip-text { display: block; }
+.tooltip-text strong { color: #fff; font-weight: 600; }
+.tooltip-text code {
+  background: rgba(255,255,255,0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.tooltip-text ul { margin: 4px 0 0 0; padding-left: 16px; }
+.tooltip-text li { margin-bottom: 2px; }
+
+/* Guide card */
+.guide-card {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 34px;
+  background: linear-gradient(135deg, #fff 0%, #f5f8ff 100%);
+  border-color: #d8e2f2;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 20px 24px;
+}
+.guide-header .card-title { margin-bottom: 0; }
+.guide-header .card-title::before {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #c8d7f5;
+  border-radius: 8px;
+  color: var(--primary);
+  background: var(--primary-light);
+  content: 'i';
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-style: italic;
+}
+.guide-toggle {
+  font-size: 13px;
+  color: var(--text-muted);
+  user-select: none;
+}
+.guide-body { padding: 0 24px 24px; }
+.guide-body.collapsed { display: none; }
+.guide-scenarios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.guide-scenario {
+  padding: 16px 18px;
+  border: 1px solid #dfe7f3;
+  border-radius: 10px;
+  background: rgba(255,255,255,.78);
+}
+.guide-scenario h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 9px;
+  color: var(--text);
+}
+.guide-scenario ol {
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.guide-scenario ol li code {
+  background: #edf2fa;
+  color: #334155;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+/* Modal format hint */
+.modal-format-hint {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.modal-format-hint strong { color: var(--text); }
+.modal-format-hint code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.modal .upload-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 7px;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .dim-bar-row .dim-name { width: 120px; font-size: 12px; }
-  .container { padding: 20px 12px; }
+  .container { padding: 28px 12px 56px; }
   .card { padding: 20px; }
+  .header { align-items: stretch; flex-direction: column; gap: 18px; }
+  .header h1 { font-size: 31px; }
+  .header-facts { grid-template-columns: 1fr 1fr; }
+  .header-fact { min-width: 0; }
+  .workflow-overview { grid-template-columns: 1fr; }
+  .workflow-overview-item + .workflow-overview-item { border-top: 1px solid var(--border); border-left: 0; }
+  .workflow-overview-item + .workflow-overview-item::before { display: none; }
+  .guide-header { padding: 18px 20px; }
+  .guide-body { padding: 0 20px 20px; }
+  .guide-scenarios { grid-template-columns: 1fr; }
+  .workflow-card::before { top: 20px; bottom: 20px; }
+  .card-description { margin-left: 0; }
   .dataset-selector { flex-direction: column; align-items: stretch; }
+  .dataset-selector .tooltip { align-self: flex-start; }
+  .dataset-actions { align-items: stretch; flex-wrap: wrap; }
+  .dataset-info { width: 100%; margin-left: 0; }
+  .tooltip-text { width: min(320px, calc(100vw - 24px)); }
+  .lb-heading, .lb-toolbar { align-items: stretch; flex-direction: column; }
+  .lb-sort-wrap { justify-content: space-between; }
+  .lb-sort { flex: 1; }
+  .lb-scale { display: none; }
+  .lb-main {
+    grid-template-columns: 34px minmax(0, 1fr) 58px 50px;
+    grid-template-areas: 'rank tool score expand' 'bar bar bar bar' 'coverage coverage coverage coverage';
+    gap: 8px;
+    padding: 14px 6px;
+  }
+  .lb-rank { grid-area: rank; }
+  .lb-tool { grid-area: tool; }
+  .lb-performance { grid-area: bar; }
+  .lb-score { grid-area: score; }
+  .lb-coverage { grid-area: coverage; display: flex; justify-content: flex-end; gap: 5px; }
+  .lb-expand { grid-area: expand; padding: 5px; }
+  .lb-detail { padding: 0 6px 14px; }
+  .lb-detail-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="header">
-    <h1>文档转换评测平台</h1>
-    <p>Document-to-Markdown Conversion Evaluation</p>
+  <header class="header">
+    <div>
+      <div class="header-kicker">Document Intelligence Benchmark</div>
+      <h1>文档转换评测平台</h1>
+      <p>用统一基准衡量 PDF 到 Markdown 的内容准确性、格式保真度与结构质量。</p>
+    </div>
+    <div class="header-facts" aria-label="平台能力">
+      <div class="header-fact"><strong>0–100</strong><span>标准化综合评分</span></div>
+      <div class="header-fact"><strong>批量评测</strong><span>支持多文件并行处理</span></div>
+    </div>
+  </header>
+
+  <div class="workflow-overview" aria-label="评测流程">
+    <div class="workflow-overview-item"><span class="workflow-overview-index">01</span><div><strong>选择评测基准</strong><span>下载标准 PDF 数据集</span></div></div>
+    <div class="workflow-overview-item"><span class="workflow-overview-index">02</span><div><strong>上传转换结果</strong><span>批量提交 Markdown 文件</span></div></div>
+    <div class="workflow-overview-item"><span class="workflow-overview-index">03</span><div><strong>分析质量报告</strong><span>查看维度得分与明细</span></div></div>
+  </div>
+
+  <!-- Usage Guide -->
+  <div class="card guide-card">
+    <div class="guide-header" onclick="toggleGuide()">
+      <div class="card-title">
+        使用指南
+      </div>
+      <span class="guide-toggle" id="guideToggle">收起 &#9650;</span>
+    </div>
+    <div class="guide-body" id="guideBody">
+      <div class="guide-scenarios">
+        <div class="guide-scenario">
+          <h4>场景一：测试我的提取工具</h4>
+          <ol>
+            <li>选择内置数据集 <code>newbench</code>，点击「下载 PDF 数据集」</li>
+            <li>用您的工具将 PDF 转为 Markdown（文件名保持一致）</li>
+            <li>上传所有 .md 文件，点击「开始评测」</li>
+            <li>查看总分、各维度得分，下载报告</li>
+          </ol>
+        </div>
+        <div class="guide-scenario">
+          <h4>场景二：使用自己的数据集</h4>
+          <ol>
+            <li>点击「+ 上传自定义数据集」，上传含 .jsonl 规则的 ZIP 包</li>
+            <li>在下拉框选择您的数据集</li>
+            <li>用工具将 PDF 转为 Markdown，上传 .md 文件</li>
+            <li>点击「开始评测」，查看结果</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="card leaderboard-card">
+    <div class="lb-heading">
+      <div>
+        <div class="card-title">
+          <span>&#127942;</span>
+          文档转换工具天梯榜
+          <span class="tooltip">?<span class="tooltip-text">所有工具必须使用相同数据集与评测配置。覆盖率低于 95% 的报告不会进入正式排名。</span></span>
+        </div>
+        <div class="lb-subtitle">综合表现一眼比较，展开可查看维度优势、类别表现与结果稳定性</div>
+      </div>
+    </div>
+    <div class="lb-toolbar">
+      <div class="lb-meta" id="leaderboardMeta"></div>
+      <div class="lb-sort-wrap">
+        <label for="leaderboardSort">排序依据</label>
+        <select class="lb-sort" id="leaderboardSort" onchange="renderLeaderboard()">
+          <option value="avg_overall">综合分</option>
+          <option value="content_faithfulness">内容准确性</option>
+          <option value="semantic_formatting">格式保真度</option>
+          <option value="tables">表格</option>
+          <option value="format_quality">格式质量</option>
+          <option value="semantic">语义相似度</option>
+        </select>
+      </div>
+    </div>
+    <div class="lb-scale" aria-hidden="true">
+      <span>名次</span><span>工具</span>
+      <span class="lb-scale-axis"><span>0</span><span>60</span><span>80</span><span>100</span></span>
+      <span>分数</span><span>成功率</span><span></span>
+    </div>
+    <div class="lb-list" id="leaderboardList">
+      <div class="lb-empty">加载中...</div>
+    </div>
   </div>
 
   <!-- Step 1: Select Dataset & Download -->
-  <div class="card">
-    <div class="card-title">
-      <span class="step-num">1</span>
-      选择数据集 &amp; 下载 PDF
+  <div class="card workflow-card">
+    <div class="section-heading">
+      <div>
+        <div class="card-title">
+          <span class="step-num">01</span>
+          选择评测基准
+        </div>
+        <p class="card-description">选择平台标准数据集，或上传适用于特定业务场景的自定义规则集。</p>
+      </div>
     </div>
     <div class="dataset-selector">
       <label>数据集</label>
+      <span class="tooltip">?<span class="tooltip-text"><strong>内置数据集</strong>：平台提供的标准评测集，含 175 个 PDF 及对应评测规则。<br><strong>自定义数据集</strong>：您上传的数据集，需包含 .jsonl 评测规则文件。</span></span>
       <select id="datasetSelect" onchange="onDatasetChange()"></select>
+      <button class="btn btn-outline btn-sm" onclick="refreshDatasets()">刷新</button>
       <button class="btn btn-outline btn-sm" onclick="openUploadModal()">+ 上传自定义数据集</button>
+      <span class="tooltip">?<span class="tooltip-text"><strong>ZIP 包内容要求（二选一）：</strong><ul><li><strong>JSONL 格式</strong>：包含 <code>.jsonl</code> 评测规则文件，PDF 可选</li><li><strong>Sidecar 格式</strong>：每个 PDF 旁放一个同名 <code>.test.json</code> 文件。（<code>.jsonl</code> 文件和 <code>.test.json</code> 文件参考ParseBench数据集）</li></ul>若您已有人工 review 过的标准 Markdown 文件，可前往「数据集构建」页面，自动生成评测规则并打包为数据集。</span></span>
     </div>
-    <button class="btn btn-primary" id="downloadBtn" onclick="downloadDataset()">
-      下载 PDF 数据集 (.zip)
-    </button>
-    <div class="dataset-info" id="datasetInfo">正在加载数据集信息...</div>
+    <div class="dataset-actions">
+      <button class="btn btn-primary" id="downloadBtn" onclick="downloadDataset()">下载 PDF 数据集</button>
+      <span class="tooltip">?<span class="tooltip-text">下载的 ZIP 包含该数据集所有可评测的 PDF 文件。用您的工具将这些 PDF 转为 Markdown 后上传评测。</span></span>
+      <div class="dataset-info" id="datasetInfo">正在加载数据集信息...</div>
+    </div>
   </div>
 
   <!-- Step 2: Upload Markdown -->
-  <div class="card">
-    <div class="card-title">
-      <span class="step-num">2</span>
-      上传转换后的 Markdown 文件
+  <div class="card workflow-card">
+    <div class="section-heading">
+      <div>
+        <div class="card-title">
+          <span class="step-num">02</span>
+          上传转换结果
+          <span class="tooltip">?<span class="tooltip-text"><strong>文件名必须与 PDF 一致</strong>，仅后缀不同。<br>例如：<code>text_simple__10k.pdf</code> &rarr; <code>text_simple__10k.md</code><br>支持批量上传，可拖拽或点击选择。</span></span>
+        </div>
+        <p class="card-description">提交工具生成的 Markdown，系统会自动匹配原始 PDF 并并行完成评测。</p>
+      </div>
     </div>
     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-      <div class="upload-icon">&#128196;</div>
+      <div class="upload-icon">MD</div>
       <div class="upload-text">拖拽 .md 文件到此处，或点击选择文件</div>
+      <div class="upload-hint">支持 .md、.markdown、.txt，可一次选择多个文件</div>
       <input type="file" id="fileInput" multiple accept=".md,.markdown,.txt" style="display:none" onchange="onFileSelect(this)">
     </div>
     <div class="notice">
-      <strong>&#9888; 提示：</strong>转换后的 Markdown 文件名需与原 PDF 文件名保持一致（仅后缀不同），<br>
+      <strong>命名规则：</strong>转换后的 Markdown 文件名需与原 PDF 文件名保持一致（仅后缀不同），
       例如：<code>text_simple__10k.pdf</code> &rarr; <code>text_simple__10k.md</code>
+    </div>
+    <div class="file-list-header" id="fileListHeader" style="display:none">
+      <span>已上传文件</span>
+      <button class="btn btn-outline btn-sm" onclick="clearAllFiles()">清空全部</button>
     </div>
     <div class="file-list" id="fileList"></div>
     <div class="eval-row">
       <button class="btn btn-primary" id="evalBtn" onclick="startEval()" disabled>
         开始评测
       </button>
+      <span class="tooltip">?<span class="tooltip-text"><strong>评测维度与权重：</strong><ul><li>内容准确性（30%）</li><li>格式保真度（25%）</li><li>表格（25%）</li><li>格式质量（10%）</li><li>语义相似度（10%，默认关闭）</li></ul>总分 = 各维度得分的加权平均（0-100 分）。</span></span>
       <span class="file-count" id="fileCount"></span>
     </div>
   </div>
@@ -538,9 +1155,9 @@ body {
   </div>
 
   <!-- Step 3: Results -->
-  <div class="card results-section" id="resultsSection">
+  <div class="card results-section workflow-card" id="resultsSection">
     <div class="card-title">
-      <span class="step-num">3</span>
+      <span class="step-num">03</span>
       评测结果
     </div>
 
@@ -581,11 +1198,18 @@ body {
     <div class="form-group">
       <label>ZIP 文件（含 .jsonl 文件，可选 PDF）</label>
       <div class="zip-drop" id="zipDrop" onclick="document.getElementById('zipInput').click()">
-        <div style="font-size:24px">&#128230;</div>
+        <div class="upload-icon">ZIP</div>
         <div class="zip-name" id="zipName">点击选择 .zip 文件</div>
         <div class="zip-clear" id="zipClear" onclick="clearZipFile(event)">&#215; 删除文件</div>
         <input type="file" id="zipInput" accept=".zip" style="display:none" onchange="onZipSelect(this)">
       </div>
+    </div>
+    <div class="modal-format-hint">
+      <strong>ZIP 包内容要求（二选一）：</strong><br>
+      1. <strong>JSONL 格式</strong>：包含 <code>.jsonl</code> 评测规则文件，PDF 可选<br>
+      2. <strong>Sidecar 格式</strong>：每个 PDF 旁放同名 <code>.test.json</code> 文件<br>
+      <br>
+      若您已有人工 review 过的标准 Markdown 文件，可前往「数据集构建」页面自动生成评测规则。
     </div>
     <div class="modal-msg" id="modalMsg"></div>
     <div class="modal-actions">
@@ -602,16 +1226,96 @@ let currentDatasetId = null;
 let datasetInfo = null;
 let lastResult = null;
 let selectedZipFile = null;
+let leaderboardData = { tools: [], meta: {} };
 
-// ── Init: load dataset list ──
+const leaderboardDimLabels = {
+  content_faithfulness: '内容准确性',
+  semantic_formatting: '格式保真度',
+  tables: '表格',
+  format_quality: '格式质量',
+  semantic: '语义相似度'
+};
+
+// ── Toggle usage guide ──
+function toggleGuide() {
+  var body = document.getElementById('guideBody');
+  var toggle = document.getElementById('guideToggle');
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    toggle.innerHTML = '\u6536\u8d77 \u25B2';
+  } else {
+    body.classList.add('collapsed');
+    toggle.innerHTML = '\u5c55\u5f00 \u25BC';
+  }
+}
+
+// ── Init: load dataset list + leaderboard ──
+function positionTooltip(trigger) {
+  var bubble = trigger.querySelector('.tooltip-text');
+  if (!bubble) return;
+  trigger.classList.add('is-open');
+  bubble.style.visibility = 'hidden';
+  bubble.style.left = '12px';
+  bubble.style.top = '12px';
+  bubble.style.maxHeight = Math.max(120, window.innerHeight - 24) + 'px';
+
+  var triggerRect = trigger.getBoundingClientRect();
+  var bubbleWidth = bubble.offsetWidth;
+  var bubbleHeight = bubble.offsetHeight;
+  var gap = 10;
+  var edge = 12;
+  var left = triggerRect.left + triggerRect.width / 2 - bubbleWidth / 2;
+  left = Math.max(edge, Math.min(left, window.innerWidth - bubbleWidth - edge));
+
+  var topAbove = triggerRect.top - bubbleHeight - gap;
+  var topBelow = triggerRect.bottom + gap;
+  var top;
+  if (topAbove >= edge) {
+    top = topAbove;
+  } else if (topBelow + bubbleHeight <= window.innerHeight - edge) {
+    top = topBelow;
+  } else {
+    top = Math.max(edge, Math.min(topBelow, window.innerHeight - bubbleHeight - edge));
+  }
+
+  bubble.style.left = Math.round(left) + 'px';
+  bubble.style.top = Math.round(top) + 'px';
+  bubble.style.visibility = 'visible';
+}
+
+function closeTooltip(trigger) {
+  trigger.classList.remove('is-open');
+}
+
+function setupTooltips() {
+  document.querySelectorAll('.tooltip').forEach(function(tooltip) {
+    if (tooltip.dataset.tooltipBound === 'true') return;
+    tooltip.dataset.tooltipBound = 'true';
+    tooltip.tabIndex = 0;
+    tooltip.setAttribute('role', 'note');
+    tooltip.addEventListener('mouseenter', function() { positionTooltip(tooltip); });
+    tooltip.addEventListener('mouseleave', function() { closeTooltip(tooltip); });
+    tooltip.addEventListener('focus', function() { positionTooltip(tooltip); });
+    tooltip.addEventListener('blur', function() { closeTooltip(tooltip); });
+  });
+}
+
+window.addEventListener('resize', function() {
+  document.querySelectorAll('.tooltip.is-open').forEach(positionTooltip);
+});
+window.addEventListener('scroll', function() {
+  document.querySelectorAll('.tooltip.is-open').forEach(positionTooltip);
+}, true);
+
 async function init() {
+  setupTooltips();
   try {
     const res = await fetch('/api/evaluation/datasets');
     const data = await res.json();
     datasets = data.datasets || [];
     const sel = document.getElementById('datasetSelect');
     sel.innerHTML = datasets.map(d =>
-      `<option value="${d.id}">${d.name}${d.is_builtin ? ' (内置)' : ''} — ${d.pdf_count} PDFs</option>`
+      '<option value="' + d.id + '">' + d.name + (d.is_builtin ? ' (内置)' : '') + ' \u2014 ' + d.pdf_count + ' PDFs</option>'
     ).join('');
     if (datasets.length > 0) {
       currentDatasetId = datasets[0].id;
@@ -623,8 +1327,218 @@ async function init() {
   } catch (e) {
     document.getElementById('datasetInfo').textContent = '数据集列表加载失败';
   }
+  loadLeaderboard();
 }
 init();
+
+// ── Refresh datasets ──
+async function refreshDatasets() {
+  try {
+    const res = await fetch('/api/evaluation/datasets/refresh', { method: 'POST' });
+    const data = await res.json();
+    datasets = data.datasets || [];
+    const sel = document.getElementById('datasetSelect');
+    const prevId = currentDatasetId;
+    sel.innerHTML = datasets.map(d =>
+      '<option value="' + d.id + '">' + d.name + (d.is_builtin ? ' (内置)' : '') + ' \u2014 ' + d.pdf_count + ' PDFs</option>'
+    ).join('');
+    if (datasets.length > 0) {
+      currentDatasetId = datasets[0].id;
+      if (datasets.some(function(d) { return d.id === prevId; })) {
+        sel.value = prevId;
+        currentDatasetId = prevId;
+      }
+      await loadDatasetInfo(currentDatasetId);
+    }
+  } catch (e) {
+    alert('刷新数据集失败: ' + e.message);
+  }
+}
+
+// ── Leaderboard ──
+async function loadLeaderboard() {
+  var el = document.getElementById('leaderboardList');
+  try {
+    var res = await fetch('/api/evaluation/leaderboard');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    leaderboardData = await res.json();
+    renderLeaderboardMeta();
+    renderLeaderboard();
+  } catch (e) {
+    el.replaceChildren(createLeaderboardElement('div', 'lb-empty', '天梯榜加载失败，请稍后重试'));
+  }
+}
+
+function createLeaderboardElement(tag, className, text) {
+  var element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function renderLeaderboardMeta() {
+  var meta = leaderboardData.meta || {};
+  var container = document.getElementById('leaderboardMeta');
+  var tools = leaderboardData.tools || [];
+  var maxTotal = Math.max(0, ...tools.map(function(tool) { return tool.total || 0; }));
+  var updated = meta.updated_at ? new Date(meta.updated_at).toLocaleDateString('zh-CN') : '未知';
+  var weights = Object.entries(meta.weights || {}).map(function(pair) {
+    return (leaderboardDimLabels[pair[0]] || pair[0]) + ' ' + Math.round(pair[1] * 100) + '%';
+  }).join(' · ');
+  var chips = [
+    ['数据集 ' + (meta.dataset || '未知'), '所有工具使用同一评测数据集'],
+    ['基准 v' + (meta.benchmark_version || 'unknown'), '评测器版本'],
+    [maxTotal + ' 份文档', '每个工具的目标评测样本数'],
+    ['更新于 ' + updated, '最近一份报告的更新时间'],
+    ['权重配置', weights || '未提供']
+  ];
+  container.replaceChildren();
+  chips.forEach(function(item) {
+    var chip = createLeaderboardElement('span', 'lb-meta-chip', item[0]);
+    chip.title = item[1];
+    container.appendChild(chip);
+  });
+}
+
+function leaderboardScore(tool, sortKey) {
+  if (sortKey === 'avg_overall') return Number(tool.avg_overall) || 0;
+  return Number((tool.dimension_avg || {})[sortKey]) || 0;
+}
+
+function renderLeaderboard() {
+  var el = document.getElementById('leaderboardList');
+  var tools = (leaderboardData.tools || []).slice();
+  if (tools.length === 0) {
+    el.replaceChildren(createLeaderboardElement('div', 'lb-empty', '暂无天梯榜数据'));
+    return;
+  }
+
+  var sortKey = document.getElementById('leaderboardSort').value;
+  tools.sort(function(a, b) {
+    if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
+    return leaderboardScore(b, sortKey) - leaderboardScore(a, sortKey);
+  });
+  var eligibleTools = tools.filter(function(tool) { return tool.eligible; });
+  var bestTool = eligibleTools[0] || tools[0];
+  var bestScore = leaderboardScore(bestTool, sortKey);
+  var bestDistribution = bestTool.score_distribution || {};
+  var officialRank = 0;
+
+  el.replaceChildren();
+  tools.forEach(function(tool) {
+    if (tool.eligible) officialRank += 1;
+    var rank = tool.eligible ? officialRank : null;
+    var score = leaderboardScore(tool, sortKey);
+    var item = createLeaderboardElement('article', 'lb-item');
+    var main = createLeaderboardElement('div', 'lb-main');
+
+    var rankEl = createLeaderboardElement('span', 'lb-rank', rank || '—');
+    if (rank === 1) rankEl.classList.add('gold');
+    if (rank === 2) rankEl.classList.add('silver');
+    if (rank === 3) rankEl.classList.add('bronze');
+    main.appendChild(rankEl);
+
+    var toolBlock = createLeaderboardElement('div', 'lb-tool');
+    var name = createLeaderboardElement('div', 'lb-name', tool.tool);
+    name.title = tool.tool;
+    toolBlock.appendChild(name);
+    toolBlock.appendChild(createLeaderboardElement(
+      'div', 'lb-tool-version', tool.tool_version ? '工具版本 ' + tool.tool_version : '版本未记录'
+    ));
+    main.appendChild(toolBlock);
+
+    var performance = createLeaderboardElement('div', 'lb-performance');
+    var bar = createLeaderboardElement('div', 'lb-bar-bg');
+    bar.setAttribute('role', 'img');
+    bar.setAttribute('aria-label', (leaderboardDimLabels[sortKey] || '综合分') + ' ' + score.toFixed(1) + ' 分');
+    var fill = createLeaderboardElement('div', 'lb-bar-fill' + (tool.eligible ? '' : ' ineligible'));
+    fill.style.width = Math.max(0, Math.min(100, score)) + '%';
+    bar.appendChild(fill);
+    performance.appendChild(bar);
+    var delta = score === bestScore ? '当前最高' : '距首位 -' + (bestScore - score).toFixed(1);
+    performance.appendChild(createLeaderboardElement('div', 'lb-delta', delta));
+    main.appendChild(performance);
+
+    var scoreEl = createLeaderboardElement('div', 'lb-score', score.toFixed(1));
+    scoreEl.appendChild(createLeaderboardElement('small', '', sortKey === 'avg_overall' ? '综合分' : leaderboardDimLabels[sortKey]));
+    main.appendChild(scoreEl);
+
+    var coverage = createLeaderboardElement('div', 'lb-coverage' + (tool.eligible ? '' : ' warn'));
+    coverage.appendChild(createLeaderboardElement('strong', '', (Number(tool.coverage) || 0).toFixed(1) + '%'));
+    coverage.appendChild(createLeaderboardElement('span', '', tool.evaluated + '/' + tool.total + ' 成功'));
+    main.appendChild(coverage);
+
+    var detailId = 'leaderboard-detail-' + officialRank + '-' + Math.random().toString(36).slice(2, 7);
+    var detail = buildLeaderboardDetail(tool, bestDistribution, sortKey);
+    detail.id = detailId;
+    detail.hidden = true;
+    var expand = createLeaderboardElement('button', 'lb-expand', '详情 ▾');
+    expand.type = 'button';
+    expand.setAttribute('aria-expanded', 'false');
+    expand.setAttribute('aria-controls', detailId);
+    expand.addEventListener('click', function() {
+      detail.hidden = !detail.hidden;
+      expand.setAttribute('aria-expanded', String(!detail.hidden));
+      expand.textContent = detail.hidden ? '详情 ▾' : '收起 ▴';
+    });
+    main.appendChild(expand);
+    item.appendChild(main);
+    item.appendChild(detail);
+    el.appendChild(item);
+  });
+}
+
+function buildLeaderboardDetail(tool, bestDistribution, sortKey) {
+  var detail = createLeaderboardElement('div', 'lb-detail');
+  var grid = createLeaderboardElement('div', 'lb-detail-grid');
+  var dimensions = createLeaderboardElement('section', 'lb-detail-section');
+  dimensions.appendChild(createLeaderboardElement('div', 'lb-detail-title', '各维度表现'));
+  var heatmap = createLeaderboardElement('div', 'lb-heatmap');
+  Object.entries(tool.dimension_avg || {}).forEach(function(pair) {
+    var score = Number(pair[1]) || 0;
+    var cell = createLeaderboardElement('div', 'lb-heat-cell');
+    cell.style.background = 'rgba(37, 99, 235, ' + (0.08 + score / 135).toFixed(2) + ')';
+    if (score >= 78) cell.style.color = '#fff';
+    cell.appendChild(createLeaderboardElement('span', '', leaderboardDimLabels[pair[0]] || pair[0]));
+    cell.appendChild(createLeaderboardElement('strong', '', score.toFixed(1)));
+    heatmap.appendChild(cell);
+  });
+  dimensions.appendChild(heatmap);
+  grid.appendChild(dimensions);
+
+  var stats = createLeaderboardElement('section', 'lb-detail-section');
+  stats.appendChild(createLeaderboardElement('div', 'lb-detail-title', '稳定性与类别表现'));
+  var distribution = tool.score_distribution || {};
+  appendLeaderboardStat(stats, '中位数', formatLeaderboardNumber(distribution.median));
+  appendLeaderboardStat(stats, '中间 50% 文档', formatLeaderboardNumber(distribution.p25) + '–' + formatLeaderboardNumber(distribution.p75));
+  appendLeaderboardStat(stats, '平均分 95% 区间', formatLeaderboardNumber(distribution.ci95_low) + '–' + formatLeaderboardNumber(distribution.ci95_high));
+  Object.entries(tool.category_stats || {}).forEach(function(pair) {
+    var label = pair[0] === 'table' ? '表格文档' : pair[0] === 'text' ? '文本文档' : pair[0];
+    appendLeaderboardStat(stats, label + '（' + (pair[1].count || 0) + '）', formatLeaderboardNumber(pair[1].avg));
+  });
+  var close = sortKey === 'avg_overall' && distribution.ci95_high >= (bestDistribution.ci95_low || 101);
+  if (close && tool.avg_overall !== (leaderboardData.tools[0] || {}).avg_overall) {
+    stats.appendChild(createLeaderboardElement('span', 'lb-close', '与领先工具表现区间重叠'));
+  }
+  if (tool.failed > 0) {
+    var errors = (tool.errors || []).map(function(error) { return error.pdf_name || '未知文件'; }).join('、');
+    stats.appendChild(createLeaderboardElement('div', 'lb-errors', '失败 ' + tool.failed + ' 份' + (errors ? '：' + errors : '')));
+  }
+  grid.appendChild(stats);
+  detail.appendChild(grid);
+  return detail;
+}
+
+function appendLeaderboardStat(parent, label, value) {
+  var row = createLeaderboardElement('div', 'lb-stat-row');
+  row.appendChild(createLeaderboardElement('span', '', label));
+  row.appendChild(createLeaderboardElement('strong', '', value));
+  parent.appendChild(row);
+}
+
+function formatLeaderboardNumber(value) {
+  return typeof value === 'number' ? value.toFixed(1) : '—';
+}
 
 async function onDatasetChange() {
   const sel = document.getElementById('datasetSelect');
@@ -634,10 +1548,10 @@ async function onDatasetChange() {
 
 async function loadDatasetInfo(datasetId) {
   try {
-    const res = await fetch(`/api/evaluation/datasets/${encodeURIComponent(datasetId)}/info`);
+    const res = await fetch('/api/evaluation/datasets/' + encodeURIComponent(datasetId) + '/info');
     datasetInfo = await res.json();
     const el = document.getElementById('datasetInfo');
-    el.innerHTML = `包含 <span>${datasetInfo.total}</span> 个 PDF`;
+    el.innerHTML = '包含 <span>' + datasetInfo.total + '</span> 个 PDF';
   } catch (e) {
     document.getElementById('datasetInfo').textContent = '数据集信息加载失败';
   }
@@ -646,7 +1560,7 @@ async function loadDatasetInfo(datasetId) {
 // ── Step 1: Download ──
 function downloadDataset() {
   if (!currentDatasetId) return;
-  window.location.href = `/api/evaluation/datasets/${encodeURIComponent(currentDatasetId)}/download`;
+  window.location.href = '/api/evaluation/datasets/' + encodeURIComponent(currentDatasetId) + '/download';
 }
 
 // ── Step 2: Upload ──
@@ -675,30 +1589,38 @@ function handleFiles(files) {
 
 function renderFileList() {
   const list = document.getElementById('fileList');
+  const header = document.getElementById('fileListHeader');
   const count = document.getElementById('fileCount');
   const btn = document.getElementById('evalBtn');
 
   if (selectedFiles.length === 0) {
     list.innerHTML = '';
+    header.style.display = 'none';
     count.textContent = '';
     btn.disabled = true;
     return;
   }
 
+  header.style.display = 'flex';
   list.innerHTML = selectedFiles.map((f, i) =>
-    `<div class="file-item">
-      <span class="check">&#10003;</span>
-      <span class="name">${f.name}</span>
-      <span class="remove" onclick="removeFile(${i})">&#215;</span>
-    </div>`
+    '<div class="file-item">' +
+    '<span class="check">&#10003;</span>' +
+    '<span class="name">' + f.name + '</span>' +
+    '<span class="remove" onclick="removeFile(' + i + ')">&#215;</span>' +
+    '</div>'
   ).join('');
 
-  count.textContent = `已选 ${selectedFiles.length} 个文件`;
+  count.textContent = '已选 ' + selectedFiles.length + ' 个文件';
   btn.disabled = false;
 }
 
 function removeFile(idx) {
   selectedFiles.splice(idx, 1);
+  renderFileList();
+}
+
+function clearAllFiles() {
+  selectedFiles = [];
   renderFileList();
 }
 
@@ -718,7 +1640,7 @@ async function startEval() {
     formData.append('files', f);
   }
 
-  const url = `/api/evaluation/eval/batch?dataset_id=${encodeURIComponent(currentDatasetId)}`;
+  const url = '/api/evaluation/eval/batch?dataset_id=' + encodeURIComponent(currentDatasetId);
 
   try {
     const res = await fetch(url, {
@@ -741,20 +1663,17 @@ function renderResults(data) {
   const section = document.getElementById('resultsSection');
   section.classList.add('show');
 
-  // Stat cards
   const total = data.total || 0;
   const evaluated = data.evaluated || 0;
   const failed = data.failed || 0;
   const avg = data.summary?.avg_overall || 0;
 
-  document.getElementById('statGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-value">${avg.toFixed(1)}</div><div class="stat-label">平均分</div></div>
-    <div class="stat-card"><div class="stat-value">${evaluated}</div><div class="stat-label">成功</div></div>
-    <div class="stat-card"><div class="stat-value" style="color:${failed > 0 ? 'var(--danger)' : 'var(--text)'}">${failed}</div><div class="stat-label">失败</div></div>
-    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">总数</div></div>
-  `;
+  document.getElementById('statGrid').innerHTML =
+    '<div class="stat-card"><div class="stat-value">' + avg.toFixed(1) + '</div><div class="stat-label">平均分</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + evaluated + '</div><div class="stat-label">成功</div></div>' +
+    '<div class="stat-card"><div class="stat-value" style="color:' + (failed > 0 ? 'var(--danger)' : 'var(--text)') + '">' + failed + '</div><div class="stat-label">失败</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + total + '</div><div class="stat-label">总数</div></div>';
 
-  // Dimension labels (shared by bars and table)
   const dimAvg = data.summary?.dimension_avg || {};
   const dimLabels = {
     content_faithfulness: '内容准确性',
@@ -764,42 +1683,37 @@ function renderResults(data) {
     semantic: '语义相似度',
   };
 
-  // Dimension bars
   let barsHtml = '';
   for (const [dim, score] of Object.entries(dimAvg)) {
     const label = dimLabels[dim] || dim;
     const pct = Math.max(0, Math.min(100, score));
-    barsHtml += `
-      <div class="dim-bar-row">
-        <span class="dim-name">${label}</span>
-        <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${pct}%"></div></div>
-        <span class="dim-score">${score.toFixed(1)}</span>
-      </div>`;
+    barsHtml +=
+      '<div class="dim-bar-row">' +
+      '<span class="dim-name">' + label + '</span>' +
+      '<div class="dim-bar-bg"><div class="dim-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<span class="dim-score">' + score.toFixed(1) + '</span>' +
+      '</div>';
   }
   document.getElementById('dimBars').innerHTML = barsHtml;
 
-  // Error list
   const errors = data.errors || [];
   const errorList = document.getElementById('errorList');
   if (errors.length > 0) {
     errorList.style.display = 'block';
-    errorList.innerHTML = `<h4>&#9888; 失败 (${errors.length})</h4>` +
-      errors.map(e => `<div class="error-item">${e.pdf_name} — ${e.error}</div>`).join('');
+    errorList.innerHTML = '<h4>&#9888; 失败 (' + errors.length + ')</h4>' +
+      errors.map(e => '<div class="error-item">' + e.pdf_name + ' \u2014 ' + e.error + '</div>').join('');
   } else {
     errorList.style.display = 'none';
   }
 
-  // Results table — dynamic columns from dimension keys
   const dimKeys = Object.keys(dimAvg);
 
-  // Build header
   let headHtml = '<th>PDF 文件名</th><th>总分</th>';
   for (const dim of dimKeys) {
-    headHtml += `<th>${dimLabels[dim] || dim}</th>`;
+    headHtml += '<th>' + (dimLabels[dim] || dim) + '</th>';
   }
   document.getElementById('resultsHead').innerHTML = headHtml;
 
-  // Build body
   const results = data.results || [];
   const body = document.getElementById('resultsBody');
   body.innerHTML = results.map(r => {
@@ -807,12 +1721,12 @@ function renderResults(data) {
     for (const d of (r.dimensions || [])) {
       dims[d.dimension] = d.score;
     }
-    let cells = `<td class="pdf-name" title="${r.pdf_name}">${r.pdf_name}</td>`;
-    cells += `<td class="score-cell ${scoreClass(r.overall_score)}">${r.overall_score.toFixed(1)}</td>`;
+    let cells = '<td class="pdf-name" title="' + r.pdf_name + '">' + r.pdf_name + '</td>';
+    cells += '<td class="score-cell ' + scoreClass(r.overall_score) + '">' + r.overall_score.toFixed(1) + '</td>';
     for (const dim of dimKeys) {
-      cells += `<td class="${scoreCellClass(dims[dim])}">${fmtScore(dims[dim])}</td>`;
+      cells += '<td class="' + scoreCellClass(dims[dim]) + '">' + fmtScore(dims[dim]) + '</td>';
     }
-    return `<tr>${cells}</tr>`;
+    return '<tr>' + cells + '</tr>';
   }).join('');
 }
 
@@ -826,7 +1740,7 @@ function scoreCellClass(s) {
   return 'score-cell ' + scoreClass(s);
 }
 function fmtScore(s) {
-  if (s === undefined || s === null) return '—';
+  if (s === undefined || s === null) return '\u2014';
   return s.toFixed(1);
 }
 
@@ -921,10 +1835,8 @@ async function uploadDataset() {
 
     if (res.ok && !data.error) {
       msg.className = 'modal-msg success';
-      msg.textContent = `数据集 "${data.name}" 上传成功 (${data.pdf_count} PDFs)`;
-      // Refresh dataset list
+      msg.textContent = '数据集 "' + data.name + '" 上传成功 (' + data.pdf_count + ' PDFs)';
       await init();
-      // Select the new dataset
       const sel = document.getElementById('datasetSelect');
       sel.value = data.id;
       currentDatasetId = data.id;

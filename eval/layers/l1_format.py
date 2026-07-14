@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+import threading
 from dataclasses import dataclass
 
 from pymarkdown.api import PyMarkdownApi, PyMarkdownScanFailure
@@ -35,6 +36,7 @@ _PENALTY_MAP: dict[str, float] = {
 
 _DEFAULT_PENALTY = 1.0
 _MAX_PENALTY = 100.0
+_SCAN_TIMEOUT_SECONDS = 15.0
 
 
 @dataclass
@@ -100,15 +102,40 @@ class L1FormatEvaluator:
     def _scan_string(self, markdown: str) -> list[PyMarkdownScanFailure]:
         """Scan Markdown string via temporary file.
 
-        PyMarkdown's scan_string exists but may behave differently;
-        using a temp file is the most reliable path.
+        A timeout is enforced via a daemon thread: PyMarkdown can hang
+        indefinitely on deeply nested lists or malformed HTML.
         """
         fd, tmp_path = tempfile.mkstemp(suffix=".md", text=True)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 f.write(markdown)
-            result = self._api.scan_path(tmp_path)
-            return list(result.scan_failures)
+
+            result_holder: list[PyMarkdownScanFailure] | Exception | None = None
+
+            def _scan() -> None:
+                nonlocal result_holder
+                try:
+                    scan_result = self._api.scan_path(tmp_path)
+                    result_holder = list(scan_result.scan_failures)
+                except Exception as exc:
+                    result_holder = exc
+
+            worker = threading.Thread(target=_scan, daemon=True)
+            worker.start()
+            worker.join(timeout=_SCAN_TIMEOUT_SECONDS)
+
+            if worker.is_alive():
+                logger.warning(
+                    "PyMarkdown scan timed out after %ss, skipping L1",
+                    _SCAN_TIMEOUT_SECONDS,
+                )
+                return []
+
+            if isinstance(result_holder, Exception):
+                logger.exception("PyMarkdown scan failed", exc_info=result_holder)
+                return []
+
+            return result_holder or []
         except Exception:
             logger.exception("PyMarkdown scan failed")
             return []

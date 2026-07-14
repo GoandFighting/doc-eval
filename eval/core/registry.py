@@ -32,8 +32,35 @@ class DatasetEntry:
     is_builtin: bool
     runner: AsyncEvalRunner
 
+    @property
+    def available_pdfs(self) -> list[str]:
+        """Return PDF file names that are both testable and downloadable.
+
+        For built-in datasets, only PDFs in ``selected_text/`` and
+        ``selected_table/`` are considered (layout-only PDFs are
+        excluded because they can't be downloaded or evaluated from
+        Markdown alone).
+
+        For user datasets, all ``*.pdf`` files in the dataset directory
+        are included.
+        """
+        testable = set(self.runner.available_pdfs)
+        if self.is_builtin:
+            downloadable: set[str] = set()
+            for subdir in ("selected_text", "selected_table"):
+                d = self.path / subdir
+                if d.exists():
+                    downloadable.update(p.name for p in d.glob("*.pdf"))
+        else:
+            downloadable = {p.name for p in self.path.rglob("*.pdf")}
+        return sorted(testable & downloadable)
+
     def to_dict(self) -> dict:
-        """Serialise to dict for API responses."""
+        """Serialise to dict for API responses.
+
+        ``pdf_count`` reflects the number of PDFs with test cases in
+        the JSONL files (used in the dataset dropdown).
+        """
         return {
             "id": self.id,
             "name": self.name,
@@ -148,3 +175,42 @@ class DatasetRegistry:
     def user_dir(self) -> Path:
         """Return the user dataset directory."""
         return self._user_dir
+
+    def refresh(self) -> dict[str, list[str]]:
+        """Re-scan user directory for added or removed datasets.
+
+        Does NOT touch the built-in dataset.
+
+        :return: Dict with ``added`` and ``removed`` lists of dataset IDs.
+        """
+        added: list[str] = []
+        removed: list[str] = []
+
+        for entry_id, entry in list(self._entries.items()):
+            if entry.is_builtin:
+                continue
+            if not entry.path.exists():
+                del self._entries[entry_id]
+                removed.append(entry_id)
+                logger.info("Removed stale dataset: %s", entry_id)
+
+        if self._user_dir.exists():
+            for child in sorted(self._user_dir.iterdir()):
+                if not child.is_dir():
+                    continue
+                child_id = self._name_to_id(child.name)
+                if child_id in self._entries:
+                    continue
+                try:
+                    entry = self._create_entry(
+                        name=child.name,
+                        path=child,
+                        is_builtin=False,
+                    )
+                    self._entries[child_id] = entry
+                    added.append(child_id)
+                    logger.info("Loaded user dataset on refresh: %s", entry.name)
+                except Exception:
+                    logger.exception("Failed to load user dataset: %s", child)
+
+        return {"added": added, "removed": removed}

@@ -45,7 +45,7 @@ async def eval_batch(
         )
 
     runner = entry.runner
-    available_pdfs = set(runner.available_pdfs)
+    available_pdfs = set(entry.available_pdfs)
     pdf_lookup: dict[str, str] = {}
     for pdf_name in available_pdfs:
         stem = Path(pdf_name).stem

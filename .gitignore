@@ -21,7 +21,16 @@ env/
 # Tooling caches
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+coverage.xml
+htmlcov/
 .opencode/
+
+# Logs
+*.log
 
 # User-uploaded datasets (runtime data, not source code)
 datasets/

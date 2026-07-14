@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from server.registry_holder import init_registry
 from server.routes_dataset import router as dataset_router
 from server.routes_eval import router as eval_router
+from server.routes_leaderboard import router as leaderboard_router
 
 app = FastAPI(
     title="Document Conversion Evaluation",
@@ -32,6 +33,7 @@ init_registry(builtin_dir=_builtin_dir, user_dir=_user_dir)
 
 app.include_router(dataset_router, prefix="/api/evaluation/datasets", tags=["dataset"])
 app.include_router(eval_router, prefix="/api/evaluation/eval", tags=["eval"])
+app.include_router(leaderboard_router, prefix="/api/evaluation/leaderboard", tags=["leaderboard"])
 
 static_dir = Path(__file__).parent / "static"
 app.mount("/evaluation", StaticFiles(directory=str(static_dir), html=True), name="static")

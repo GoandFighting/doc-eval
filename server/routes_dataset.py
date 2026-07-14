@@ -28,6 +28,22 @@ async def list_datasets() -> dict[str, Any]:
     return {"datasets": datasets}
 
 
+@router.post("/refresh")
+async def refresh_datasets() -> dict[str, Any]:
+    """Re-scan user dataset directory for added or removed datasets.
+
+    :return: Updated dataset list plus added/removed IDs.
+    """
+    registry = get_registry()
+    changes = registry.refresh()
+    datasets = [e.to_dict() for e in registry.list_all()]
+    return {
+        "added": changes["added"],
+        "removed": changes["removed"],
+        "datasets": datasets,
+    }
+
+
 @router.post("/upload")
 async def upload_dataset(
     name: str = Form(...),
@@ -146,7 +162,7 @@ async def dataset_info(dataset_id: str) -> dict[str, Any]:
     if entry is None:
         return JSONResponse(status_code=404, content={"error": "Dataset not found"})
 
-    pdfs = sorted(entry.runner.available_pdfs)
+    pdfs = entry.available_pdfs
     return {
         "id": entry.id,
         "name": entry.name,
