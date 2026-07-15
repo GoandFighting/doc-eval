@@ -352,20 +352,89 @@ body {
   font-weight: 700;
   white-space: nowrap;
 }
-.dataset-selector select {
+.dataset-picker {
+  position: relative;
   flex: 1;
+  min-width: 220px;
+}
+.dataset-picker-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   min-height: 38px;
-  padding: 8px 34px 8px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
+  text-align: left;
   color: var(--text);
   background: #fff;
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;
 }
-.dataset-selector select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(34,84,209,.1); }
+.dataset-picker-trigger:hover,
+.dataset-picker-trigger:focus,
+.dataset-picker.open .dataset-picker-trigger {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(34,84,209,.1);
+}
+.dataset-picker-arrow { color: var(--text-muted); font-size: 11px; transition: transform .15s ease; }
+.dataset-picker.open .dataset-picker-arrow { transform: rotate(180deg); }
+.dataset-picker-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  display: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 280px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(24,39,75,.16);
+}
+.dataset-picker.open .dataset-picker-menu { display: block; }
+.dataset-option-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+}
+.dataset-option-row:hover,
+.dataset-option-row.selected { background: var(--primary-light); }
+.dataset-option-select {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.dataset-option-delete {
+  flex: 0 0 auto;
+  margin-right: 5px;
+  padding: 5px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #b91c1c;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.dataset-option-delete:hover { border-color: #f87171; background: #fef2f2; }
+.dataset-option-delete:disabled { opacity: .55; cursor: wait; }
+.dataset-picker-empty { padding: 10px; color: var(--text-muted); font-size: 12px; text-align: center; }
 .dataset-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 
 /* Dataset info */
@@ -1164,16 +1233,22 @@ body {
           <span class="step-num">01</span>
           选择评测基准
         </div>
-        <p class="card-description">选择平台标准数据集，或上传适用于特定业务场景的自定义规则集。</p>
+        <p class="card-description">选择平台标准数据集，或使用评测集构建工具创建适用于特定业务场景的自定义规则集。</p>
       </div>
     </div>
     <div class="dataset-selector">
       <label>数据集</label>
-      <span class="tooltip">?<span class="tooltip-text"><strong>内置数据集</strong>：平台提供的标准评测集，含 175 个 PDF 及对应评测规则。<br><strong>自定义数据集</strong>：您上传的数据集，需包含 .jsonl 评测规则文件。</span></span>
-      <select id="datasetSelect" onchange="onDatasetChange()"></select>
+      <span class="tooltip">?<span class="tooltip-text"><strong>内置数据集</strong>：平台提供的标准评测集，含 PDF 及对应评测规则。<br><strong>自定义数据集</strong>：通过「评测集构建」系统创建并发布的数据集。</span></span>
+      <div class="dataset-picker" id="datasetPicker">
+        <button class="dataset-picker-trigger" id="datasetPickerTrigger" type="button" aria-haspopup="menu" aria-expanded="false" onclick="toggleDatasetMenu()">
+          <span id="datasetPickerLabel">正在加载数据集...</span>
+          <span class="dataset-picker-arrow" aria-hidden="true">&#9660;</span>
+        </button>
+        <div class="dataset-picker-menu" id="datasetPickerMenu" role="menu" aria-label="可用数据集"></div>
+      </div>
       <button class="btn btn-outline btn-sm" onclick="refreshDatasets()">刷新</button>
-      <button class="btn btn-outline btn-sm" onclick="openUploadModal()">+ 上传自定义数据集</button>
-      <span class="tooltip">?<span class="tooltip-text"><strong>ZIP 包内容要求（二选一）：</strong><ul><li><strong>JSONL 格式</strong>：包含 <code>.jsonl</code> 评测规则文件，PDF 可选</li><li><strong>Sidecar 格式</strong>：每个 PDF 旁放一个同名 <code>.test.json</code> 文件。（<code>.jsonl</code> 文件和 <code>.test.json</code> 文件参考ParseBench数据集）</li></ul>若您已有人工 review 过的标准 Markdown 文件，可前往「数据集构建」页面，自动生成评测规则并打包为数据集。</span></span>
+      <a class="btn btn-outline btn-sm" href="/dataset-builder/" target="_top">+ 构建自定义数据集</a>
+      <span class="tooltip">?<span class="tooltip-text">前往「评测集构建」系统，上传同名 PDF 与人工校验后的 Markdown，生成并发布自定义评测集。</span></span>
     </div>
     <div class="dataset-actions">
       <button class="btn btn-primary" id="downloadBtn" onclick="downloadDataset()">下载 PDF 数据集</button>
@@ -1299,46 +1374,12 @@ body {
   </main>
 </div>
 
-<!-- Upload Dataset Modal -->
-<div class="modal-overlay" id="uploadModal">
-  <div class="modal">
-    <h3>上传自定义数据集</h3>
-    <div class="form-group">
-      <label>数据集名称</label>
-      <input type="text" id="datasetNameInput" placeholder="my_dataset">
-      <div class="hint">仅允许字母、数字、下划线、连字符、中文</div>
-    </div>
-    <div class="form-group">
-      <label>ZIP 文件（含 .jsonl 文件，可选 PDF）</label>
-      <div class="zip-drop" id="zipDrop" onclick="document.getElementById('zipInput').click()">
-        <div class="upload-icon">ZIP</div>
-        <div class="zip-name" id="zipName">点击选择 .zip 文件</div>
-        <div class="zip-clear" id="zipClear" onclick="clearZipFile(event)">&#215; 删除文件</div>
-        <input type="file" id="zipInput" accept=".zip" style="display:none" onchange="onZipSelect(this)">
-      </div>
-    </div>
-    <div class="modal-format-hint">
-      <strong>ZIP 包内容要求（二选一）：</strong><br>
-      1. <strong>JSONL 格式</strong>：包含 <code>.jsonl</code> 评测规则文件，PDF 可选<br>
-      2. <strong>Sidecar 格式</strong>：每个 PDF 旁放同名 <code>.test.json</code> 文件<br>
-      <br>
-      若您已有人工 review 过的标准 Markdown 文件，可前往「数据集构建」页面自动生成评测规则。
-    </div>
-    <div class="modal-msg" id="modalMsg"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeUploadModal()">取消</button>
-      <button class="btn btn-primary" id="uploadDatasetBtn" onclick="uploadDataset()" disabled>上传</button>
-    </div>
-  </div>
-</div>
-
 <script>
 let selectedFiles = [];
 let datasets = [];
 let currentDatasetId = null;
 let datasetInfo = null;
 let lastResult = null;
-let selectedZipFile = null;
 let leaderboardData = { tools: [], meta: {} };
 
 const leaderboardDimLabels = {
@@ -1460,6 +1501,118 @@ window.addEventListener('scroll', function() {
   document.querySelectorAll('.tooltip.is-open').forEach(positionTooltip);
 }, true);
 
+function datasetLabel(dataset) {
+  return dataset.name + (dataset.is_builtin ? ' (内置)' : '') + ' \u2014 ' + dataset.pdf_count + ' PDFs';
+}
+
+function setDatasetMenuOpen(open) {
+  const picker = document.getElementById('datasetPicker');
+  const trigger = document.getElementById('datasetPickerTrigger');
+  picker.classList.toggle('open', open);
+  trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function toggleDatasetMenu() {
+  const picker = document.getElementById('datasetPicker');
+  setDatasetMenuOpen(!picker.classList.contains('open'));
+}
+
+function renderDatasetPicker(preferredId) {
+  const label = document.getElementById('datasetPickerLabel');
+  const menu = document.getElementById('datasetPickerMenu');
+  menu.replaceChildren();
+
+  if (!datasets.length) {
+    currentDatasetId = null;
+    label.textContent = '无可用数据集';
+    const empty = document.createElement('div');
+    empty.className = 'dataset-picker-empty';
+    empty.textContent = '无可用数据集';
+    menu.appendChild(empty);
+    return;
+  }
+
+  const selected = datasets.find(function(dataset) {
+    return dataset.id === preferredId;
+  }) || datasets[0];
+  currentDatasetId = selected.id;
+  label.textContent = datasetLabel(selected);
+
+  datasets.forEach(function(dataset) {
+    const row = document.createElement('div');
+    row.className = 'dataset-option-row' + (dataset.id === currentDatasetId ? ' selected' : '');
+
+    const choose = document.createElement('button');
+    choose.type = 'button';
+    choose.className = 'dataset-option-select';
+    choose.setAttribute('role', 'menuitem');
+    choose.textContent = datasetLabel(dataset);
+    choose.addEventListener('click', function() { selectDataset(dataset.id); });
+    row.appendChild(choose);
+
+    if (!dataset.is_builtin) {
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'dataset-option-delete';
+      remove.textContent = '删除';
+      remove.title = '删除自定义数据集 ' + dataset.name;
+      remove.setAttribute('aria-label', '删除自定义数据集 ' + dataset.name);
+      remove.addEventListener('click', function(event) {
+        event.stopPropagation();
+        deleteDataset(dataset, remove);
+      });
+      row.appendChild(remove);
+    }
+
+    menu.appendChild(row);
+  });
+}
+
+async function selectDataset(datasetId) {
+  currentDatasetId = datasetId;
+  setDatasetMenuOpen(false);
+  renderDatasetPicker(datasetId);
+  await loadDatasetInfo(datasetId);
+}
+
+async function deleteDataset(dataset, button) {
+  const confirmed = window.confirm('确认删除自定义数据集“' + dataset.name + '”吗？删除后无法恢复。');
+  if (!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = '删除中...';
+  try {
+    const res = await fetch('/api/evaluation/datasets/' + encodeURIComponent(dataset.id), {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (!res.ok || !data.deleted) {
+      throw new Error(data.error || '删除失败');
+    }
+
+    const preferredId = currentDatasetId === dataset.id ? null : currentDatasetId;
+    datasets = datasets.filter(function(item) { return item.id !== dataset.id; });
+    renderDatasetPicker(preferredId);
+    if (currentDatasetId) {
+      await loadDatasetInfo(currentDatasetId);
+    } else {
+      document.getElementById('datasetInfo').textContent = '无可用数据集';
+    }
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = '删除';
+    alert('删除数据集失败: ' + error.message);
+  }
+}
+
+document.addEventListener('click', function(event) {
+  const picker = document.getElementById('datasetPicker');
+  if (!picker.contains(event.target)) setDatasetMenuOpen(false);
+});
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') setDatasetMenuOpen(false);
+});
+
 async function init() {
   setupTooltips();
   setupWorkflowNavigation();
@@ -1467,13 +1620,8 @@ async function init() {
     const res = await fetch('/api/evaluation/datasets');
     const data = await res.json();
     datasets = data.datasets || [];
-    const sel = document.getElementById('datasetSelect');
-    sel.innerHTML = datasets.map(d =>
-      '<option value="' + d.id + '">' + d.name + (d.is_builtin ? ' (内置)' : '') + ' \u2014 ' + d.pdf_count + ' PDFs</option>'
-    ).join('');
+    renderDatasetPicker(currentDatasetId);
     if (datasets.length > 0) {
-      currentDatasetId = datasets[0].id;
-      sel.value = currentDatasetId;
       await loadDatasetInfo(currentDatasetId);
     } else {
       document.getElementById('datasetInfo').textContent = '无可用数据集';
@@ -1491,18 +1639,12 @@ async function refreshDatasets() {
     const res = await fetch('/api/evaluation/datasets/refresh', { method: 'POST' });
     const data = await res.json();
     datasets = data.datasets || [];
-    const sel = document.getElementById('datasetSelect');
     const prevId = currentDatasetId;
-    sel.innerHTML = datasets.map(d =>
-      '<option value="' + d.id + '">' + d.name + (d.is_builtin ? ' (内置)' : '') + ' \u2014 ' + d.pdf_count + ' PDFs</option>'
-    ).join('');
+    renderDatasetPicker(prevId);
     if (datasets.length > 0) {
-      currentDatasetId = datasets[0].id;
-      if (datasets.some(function(d) { return d.id === prevId; })) {
-        sel.value = prevId;
-        currentDatasetId = prevId;
-      }
       await loadDatasetInfo(currentDatasetId);
+    } else {
+      document.getElementById('datasetInfo').textContent = '无可用数据集';
     }
   } catch (e) {
     alert('刷新数据集失败: ' + e.message);
@@ -1692,12 +1834,6 @@ function appendLeaderboardStat(parent, label, value) {
 
 function formatLeaderboardNumber(value) {
   return typeof value === 'number' ? value.toFixed(1) : '—';
-}
-
-async function onDatasetChange() {
-  const sel = document.getElementById('datasetSelect');
-  currentDatasetId = sel.value;
-  await loadDatasetInfo(currentDatasetId);
 }
 
 async function loadDatasetInfo(datasetId) {
@@ -1917,104 +2053,6 @@ function downloadReport() {
   URL.revokeObjectURL(url);
 }
 
-// ── Upload Custom Dataset Modal ──
-function openUploadModal() {
-  document.getElementById('uploadModal').classList.add('show');
-  document.getElementById('modalMsg').textContent = '';
-  document.getElementById('modalMsg').className = 'modal-msg';
-  document.getElementById('datasetNameInput').value = '';
-  document.getElementById('zipName').textContent = '点击选择 .zip 文件';
-  document.getElementById('zipClear').style.display = 'none';
-  selectedZipFile = null;
-  document.getElementById('uploadDatasetBtn').disabled = true;
-}
-
-function closeUploadModal() {
-  document.getElementById('uploadModal').classList.remove('show');
-}
-
-const zipDrop = document.getElementById('zipDrop');
-zipDrop.addEventListener('dragover', e => { e.preventDefault(); zipDrop.style.borderColor = 'var(--primary)'; });
-zipDrop.addEventListener('dragleave', () => { zipDrop.style.borderColor = '#cbd5e1'; });
-zipDrop.addEventListener('drop', e => {
-  e.preventDefault();
-  zipDrop.style.borderColor = '#cbd5e1';
-  if (e.dataTransfer.files.length > 0) {
-    document.getElementById('zipInput').files = e.dataTransfer.files;
-    onZipSelect({ files: e.dataTransfer.files });
-  }
-});
-
-function onZipSelect(input) {
-  const f = input.files && input.files[0];
-  if (!f) return;
-  selectedZipFile = f;
-  document.getElementById('zipName').textContent = f.name;
-  document.getElementById('zipClear').style.display = 'block';
-  checkUploadReady();
-}
-
-function clearZipFile(e) {
-  e.stopPropagation();
-  selectedZipFile = null;
-  document.getElementById('zipName').textContent = '点击选择 .zip 文件';
-  document.getElementById('zipClear').style.display = 'none';
-  document.getElementById('zipInput').value = '';
-  checkUploadReady();
-}
-
-document.getElementById('datasetNameInput').addEventListener('input', checkUploadReady);
-
-function checkUploadReady() {
-  const name = document.getElementById('datasetNameInput').value.trim();
-  const ready = name && selectedZipFile;
-  document.getElementById('uploadDatasetBtn').disabled = !ready;
-}
-
-async function uploadDataset() {
-  const name = document.getElementById('datasetNameInput').value.trim();
-  const msg = document.getElementById('modalMsg');
-  const btn = document.getElementById('uploadDatasetBtn');
-
-  if (!name || !selectedZipFile) return;
-
-  btn.disabled = true;
-  btn.textContent = '上传中...';
-  msg.className = 'modal-msg';
-  msg.textContent = '';
-
-  const formData = new FormData();
-  formData.append('name', name);
-  formData.append('file', selectedZipFile);
-
-  try {
-    const res = await fetch('/api/evaluation/datasets/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (res.ok && !data.error) {
-      msg.className = 'modal-msg success';
-      msg.textContent = '数据集 "' + data.name + '" 上传成功 (' + data.pdf_count + ' PDFs)';
-      await init();
-      const sel = document.getElementById('datasetSelect');
-      sel.value = data.id;
-      currentDatasetId = data.id;
-      await loadDatasetInfo(data.id);
-      setTimeout(closeUploadModal, 1200);
-    } else {
-      msg.className = 'modal-msg error';
-      msg.textContent = data.error || '上传失败';
-    }
-  } catch (e) {
-    msg.className = 'modal-msg error';
-    msg.textContent = '请求失败: ' + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '上传';
-  }
-}
 </script>
 </body>
 </html>

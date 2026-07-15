@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -170,6 +171,45 @@ class DatasetRegistry:
             self._entries.values(),
             key=lambda e: (not e.is_builtin, e.name),
         )
+
+    def delete_user_dataset(self, dataset_id: str) -> DatasetEntry:
+        """Delete a user dataset from the registry and filesystem.
+
+        Built-in datasets are immutable.  User datasets are always stored as
+        direct children of ``user_dir``; removing only that direct child keeps
+        deletion scoped to the managed dataset directory.
+
+        :param dataset_id: Dataset identifier to delete.
+        :return: The removed dataset entry.
+        :raises KeyError: If the dataset does not exist.
+        :raises ValueError: If the dataset is built in or its path is unsafe.
+        """
+        entry = self._entries.get(dataset_id)
+        if entry is None:
+            raise KeyError(dataset_id)
+        if entry.is_builtin:
+            raise ValueError("Built-in datasets cannot be deleted")
+
+        user_root = self._user_dir.resolve()
+        try:
+            relative_path = entry.path.absolute().relative_to(self._user_dir.absolute())
+        except ValueError as exc:
+            raise ValueError("Dataset path is outside the managed directory") from exc
+        if not relative_path.parts:
+            raise ValueError("Dataset path is outside the managed directory")
+        target = self._user_dir / relative_path.parts[0]
+
+        if target.is_symlink():
+            target.unlink()
+        elif target.exists():
+            resolved_target = target.resolve()
+            if resolved_target.parent != user_root:
+                raise ValueError("Dataset path is outside the managed directory")
+            shutil.rmtree(target)
+
+        del self._entries[dataset_id]
+        logger.info("Deleted user dataset: %s (%s)", entry.name, dataset_id)
+        return entry
 
     @property
     def user_dir(self) -> Path:

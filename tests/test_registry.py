@@ -132,3 +132,30 @@ class TestDatasetRegistry:
         assert entry is not None
         assert entry.is_builtin is False
         assert "persist.pdf" in entry.runner.available_pdfs
+
+    def test_delete_user_dataset_removes_registry_entry_and_directory(self, registry, temp_dirs):
+        """Deleting a user dataset should remove both state and files."""
+        _, user_dir = temp_dirs
+        ds_path = _make_dataset_dir(user_dir, "delete_me", "delete.pdf")
+        registry.register(name="delete_me", path=ds_path)
+
+        removed = registry.delete_user_dataset("delete_me")
+
+        assert removed.name == "delete_me"
+        assert registry.get("delete_me") is None
+        assert not ds_path.exists()
+
+    def test_delete_builtin_dataset_is_rejected(self, registry, temp_dirs):
+        """The built-in benchmark must remain immutable."""
+        builtin_dir, _ = temp_dirs
+
+        with pytest.raises(ValueError, match="Built-in datasets cannot be deleted"):
+            registry.delete_user_dataset("newbench")
+
+        assert registry.get("newbench") is not None
+        assert builtin_dir.exists()
+
+    def test_delete_unknown_dataset_raises_key_error(self, registry):
+        """Deleting an unknown dataset should report a missing identifier."""
+        with pytest.raises(KeyError):
+            registry.delete_user_dataset("missing")
