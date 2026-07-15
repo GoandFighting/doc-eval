@@ -26,6 +26,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -37,11 +38,94 @@ body {
   min-height: 100vh;
 }
 
-.container {
-  max-width: 1080px;
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: start;
+  gap: 30px;
+  width: min(1400px, calc(100% - 36px));
   margin: 0 auto;
-  padding: 54px 24px 80px;
 }
+.container {
+  min-width: 0;
+  padding: 54px 0 80px;
+}
+
+/* Sticky workflow navigation */
+.workflow-sidebar {
+  align-self: stretch;
+  min-height: 100%;
+  padding-top: 54px;
+}
+.workflow-nav-panel {
+  position: sticky;
+  top: clamp(72px, 14vh, 128px);
+  padding: 22px 18px;
+  border: 1px solid rgba(210,219,232,.95);
+  border-radius: 14px;
+  background: rgba(255,255,255,.88);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+.workflow-nav-eyebrow {
+  margin-bottom: 4px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.workflow-nav-title { margin-bottom: 20px; color: var(--text); font-size: 17px; font-weight: 750; }
+.workflow-nav { position: relative; display: grid; gap: 6px; }
+.workflow-nav::before {
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 20px;
+  width: 1px;
+  background: #cfdaeb;
+  content: '';
+}
+.workflow-nav-link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 70px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color .18s ease, background .18s ease;
+}
+.workflow-nav-link:hover { color: var(--primary); background: #f4f7fd; }
+.workflow-nav-number {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #c5d2e7;
+  border-radius: 50%;
+  color: var(--primary);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.workflow-nav-copy strong { display: block; color: inherit; font-size: 12px; line-height: 1.35; }
+.workflow-nav-copy small { display: block; margin-top: 3px; color: #8a96a8; font-size: 10px; line-height: 1.45; }
+.workflow-nav-link.active { color: var(--primary); background: var(--primary-light); }
+.workflow-nav-link.active .workflow-nav-number {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 0 0 5px rgba(34,84,209,.1);
+}
+.workflow-nav-link.completed .workflow-nav-number { border-color: #91a9dc; background: #eef3ff; }
 
 /* Header */
 .header {
@@ -93,38 +177,6 @@ body {
 }
 .header-fact strong { display: block; font-size: 15px; }
 .header-fact span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 10px; }
-.workflow-overview {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: rgba(255,255,255,.8);
-  box-shadow: 0 1px 2px rgba(15,23,42,.03);
-}
-.workflow-overview-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-}
-.workflow-overview-item + .workflow-overview-item { border-left: 1px solid var(--border); }
-.workflow-overview-item + .workflow-overview-item::before {
-  position: absolute;
-  left: -7px;
-  width: 12px;
-  height: 12px;
-  border-top: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  background: #fff;
-  transform: rotate(45deg);
-  content: '';
-}
-.workflow-overview-index { color: var(--primary); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
-.workflow-overview-item strong { display: block; font-size: 12px; }
-.workflow-overview-item span:last-child { display: block; color: var(--text-muted); font-size: 10px; }
-}
 
 /* Card */
 .card {
@@ -170,9 +222,81 @@ body {
   background: var(--primary);
   content: '';
 }
+.workflow-section { scroll-margin-top: 30px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .section-heading .card-title { margin-bottom: 5px; }
 .card-description { margin: 0 0 22px 40px; color: var(--text-muted); font-size: 12px; }
+
+/* External conversion step */
+.conversion-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1.2fr) 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.conversion-stage {
+  min-height: 92px;
+  padding: 16px;
+  border: 1px solid #dce4f0;
+  border-radius: 10px;
+  background: #fff;
+}
+.conversion-stage-label {
+  display: inline-flex;
+  margin-bottom: 9px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.conversion-stage strong { display: block; margin-bottom: 4px; font-size: 13px; }
+.conversion-stage span { display: block; color: var(--text-muted); font-size: 10px; line-height: 1.5; }
+.conversion-arrow { color: #9babc1; font-size: 20px; text-align: center; }
+.conversion-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid #9db2dc;
+  color: var(--text-muted);
+  background: #f7f9fc;
+  font-size: 11px;
+}
+.results-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.results-placeholder-copy { display: flex; align-items: center; gap: 14px; }
+.results-placeholder-copy .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 12px;
+  font-weight: 800;
+}
+.results-placeholder-copy strong { display: block; font-size: 16px; }
+.results-placeholder-copy span:last-child { display: block; margin-top: 3px; color: var(--text-muted); font-size: 11px; }
+.results-placeholder-status {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: #f8fafc;
+  font-size: 10px;
+}
 
 /* Buttons */
 .btn {
@@ -850,77 +974,6 @@ body {
 .tooltip-text ul { margin: 4px 0 0 0; padding-left: 16px; }
 .tooltip-text li { margin-bottom: 2px; }
 
-/* Guide card */
-.guide-card {
-  padding: 0;
-  overflow: hidden;
-  margin-bottom: 34px;
-  background: linear-gradient(135deg, #fff 0%, #f5f8ff 100%);
-  border-color: #d8e2f2;
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-.guide-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 20px 24px;
-}
-.guide-header .card-title { margin-bottom: 0; }
-.guide-header .card-title::before {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #c8d7f5;
-  border-radius: 8px;
-  color: var(--primary);
-  background: var(--primary-light);
-  content: 'i';
-  font-family: Georgia, serif;
-  font-size: 15px;
-  font-style: italic;
-}
-.guide-toggle {
-  font-size: 13px;
-  color: var(--text-muted);
-  user-select: none;
-}
-.guide-body { padding: 0 24px 24px; }
-.guide-body.collapsed { display: none; }
-.guide-scenarios {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.guide-scenario {
-  padding: 16px 18px;
-  border: 1px solid #dfe7f3;
-  border-radius: 10px;
-  background: rgba(255,255,255,.78);
-}
-.guide-scenario h4 {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 9px;
-  color: var(--text);
-}
-.guide-scenario ol {
-  padding-left: 18px;
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.8;
-}
-.guide-scenario ol li code {
-  background: #edf2fa;
-  color: #334155;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
 /* Modal format hint */
 .modal-format-hint {
   margin-top: 12px;
@@ -954,23 +1007,52 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 1100px) {
+  .app-shell { grid-template-columns: 205px minmax(0, 1fr); gap: 20px; }
+  .workflow-nav-panel { padding: 18px 12px; }
+  .workflow-nav-link { grid-template-columns: 38px minmax(0, 1fr); gap: 7px; }
+  .workflow-nav-number { width: 36px; height: 36px; }
+  .workflow-nav::before { left: 18px; }
+}
+
+@media (max-width: 900px) {
+  .app-shell { display: block; width: min(100% - 24px, 1080px); }
+  .workflow-sidebar {
+    position: sticky;
+    z-index: 500;
+    top: 0;
+    padding-top: 10px;
+  }
+  .workflow-nav-panel { position: static; padding: 10px; border-radius: 12px; }
+  .workflow-nav-eyebrow, .workflow-nav-title { display: none; }
+  .workflow-nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .workflow-nav::-webkit-scrollbar { display: none; }
+  .workflow-nav::before { display: none; }
+  .workflow-nav-link {
+    grid-template-columns: 32px auto;
+    min-width: 170px;
+    min-height: 54px;
+    padding: 6px 8px;
+  }
+  .workflow-nav-number { width: 30px; height: 30px; }
+  .workflow-nav-copy small { display: none; }
+  .container { padding-top: 24px; }
+}
+
 @media (max-width: 600px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .dim-bar-row .dim-name { width: 120px; font-size: 12px; }
-  .container { padding: 28px 12px 56px; }
+  .container { padding: 24px 0 56px; }
   .card { padding: 20px; }
   .header { align-items: stretch; flex-direction: column; gap: 18px; }
   .header h1 { font-size: 31px; }
   .header-facts { grid-template-columns: 1fr 1fr; }
   .header-fact { min-width: 0; }
-  .workflow-overview { grid-template-columns: 1fr; }
-  .workflow-overview-item + .workflow-overview-item { border-top: 1px solid var(--border); border-left: 0; }
-  .workflow-overview-item + .workflow-overview-item::before { display: none; }
-  .guide-header { padding: 18px 20px; }
-  .guide-body { padding: 0 20px 20px; }
-  .guide-scenarios { grid-template-columns: 1fr; }
   .workflow-card::before { top: 20px; bottom: 20px; }
   .card-description { margin-left: 0; }
+  .conversion-flow { grid-template-columns: 1fr; }
+  .conversion-arrow { transform: rotate(90deg); }
+  .results-placeholder { align-items: flex-start; flex-direction: column; }
   .dataset-selector { flex-direction: column; align-items: stretch; }
   .dataset-selector .tooltip { align-self: flex-start; }
   .dataset-actions { align-items: stretch; flex-wrap: wrap; }
@@ -998,7 +1080,33 @@ body {
 </style>
 </head>
 <body>
-<div class="container">
+<div class="app-shell">
+  <aside class="workflow-sidebar" aria-label="评测工作流导航">
+    <div class="workflow-nav-panel">
+      <div class="workflow-nav-eyebrow">Evaluation workflow</div>
+      <div class="workflow-nav-title">评测流程</div>
+      <nav class="workflow-nav">
+        <a class="workflow-nav-link active" href="#workflow-step-1" data-nav-step="1" aria-current="step">
+          <span class="workflow-nav-number">01</span>
+          <span class="workflow-nav-copy"><strong>选择评测基准</strong><small>下载标准 PDF 数据</small></span>
+        </a>
+        <a class="workflow-nav-link" href="#workflow-step-2" data-nav-step="2">
+          <span class="workflow-nav-number">02</span>
+          <span class="workflow-nav-copy"><strong>转换 PDF 文档</strong><small>使用待测工具生成 Markdown</small></span>
+        </a>
+        <a class="workflow-nav-link" href="#workflow-step-3" data-nav-step="3">
+          <span class="workflow-nav-number">03</span>
+          <span class="workflow-nav-copy"><strong>上传转换结果</strong><small>批量提交 Markdown 文件</small></span>
+        </a>
+        <a class="workflow-nav-link" href="#workflow-step-4" data-nav-step="4">
+          <span class="workflow-nav-number">04</span>
+          <span class="workflow-nav-copy"><strong>查看评测报告</strong><small>分析综合分与维度明细</small></span>
+        </a>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="container">
 
   <header class="header">
     <div>
@@ -1011,44 +1119,6 @@ body {
       <div class="header-fact"><strong>批量评测</strong><span>支持多文件并行处理</span></div>
     </div>
   </header>
-
-  <div class="workflow-overview" aria-label="评测流程">
-    <div class="workflow-overview-item"><span class="workflow-overview-index">01</span><div><strong>选择评测基准</strong><span>下载标准 PDF 数据集</span></div></div>
-    <div class="workflow-overview-item"><span class="workflow-overview-index">02</span><div><strong>上传转换结果</strong><span>批量提交 Markdown 文件</span></div></div>
-    <div class="workflow-overview-item"><span class="workflow-overview-index">03</span><div><strong>分析质量报告</strong><span>查看维度得分与明细</span></div></div>
-  </div>
-
-  <!-- Usage Guide -->
-  <div class="card guide-card">
-    <div class="guide-header" onclick="toggleGuide()">
-      <div class="card-title">
-        使用指南
-      </div>
-      <span class="guide-toggle" id="guideToggle">收起 &#9650;</span>
-    </div>
-    <div class="guide-body" id="guideBody">
-      <div class="guide-scenarios">
-        <div class="guide-scenario">
-          <h4>场景一：测试我的提取工具</h4>
-          <ol>
-            <li>选择内置数据集 <code>newbench</code>，点击「下载 PDF 数据集」</li>
-            <li>用您的工具将 PDF 转为 Markdown（文件名保持一致）</li>
-            <li>上传所有 .md 文件，点击「开始评测」</li>
-            <li>查看总分、各维度得分，下载报告</li>
-          </ol>
-        </div>
-        <div class="guide-scenario">
-          <h4>场景二：使用自己的数据集</h4>
-          <ol>
-            <li>点击「+ 上传自定义数据集」，上传含 .jsonl 规则的 ZIP 包</li>
-            <li>在下拉框选择您的数据集</li>
-            <li>用工具将 PDF 转为 Markdown，上传 .md 文件</li>
-            <li>点击「开始评测」，查看结果</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Leaderboard -->
   <div class="card leaderboard-card">
@@ -1087,7 +1157,7 @@ body {
   </div>
 
   <!-- Step 1: Select Dataset & Download -->
-  <div class="card workflow-card">
+  <section class="card workflow-card workflow-section" id="workflow-step-1" data-workflow-step="1">
     <div class="section-heading">
       <div>
         <div class="card-title">
@@ -1110,14 +1180,47 @@ body {
       <span class="tooltip">?<span class="tooltip-text">下载的 ZIP 包含该数据集所有可评测的 PDF 文件。用您的工具将这些 PDF 转为 Markdown 后上传评测。</span></span>
       <div class="dataset-info" id="datasetInfo">正在加载数据集信息...</div>
     </div>
-  </div>
+  </section>
 
-  <!-- Step 2: Upload Markdown -->
-  <div class="card workflow-card">
+  <!-- Step 2: Convert PDF externally -->
+  <section class="card workflow-card workflow-section" id="workflow-step-2" data-workflow-step="2">
     <div class="section-heading">
       <div>
         <div class="card-title">
           <span class="step-num">02</span>
+          使用待测工具转换 PDF
+        </div>
+        <p class="card-description">在本平台之外运行你的文档转换工具，将刚下载的 PDF 批量转换成 Markdown。</p>
+      </div>
+    </div>
+    <div class="conversion-flow">
+      <div class="conversion-stage">
+        <span class="conversion-stage-label">INPUT</span>
+        <strong>标准 PDF 数据集</strong>
+        <span>使用步骤 01 下载的原始文档作为统一输入。</span>
+      </div>
+      <div class="conversion-arrow" aria-hidden="true">&#8594;</div>
+      <div class="conversion-stage">
+        <span class="conversion-stage-label">PROCESS</span>
+        <strong>你的文档转换工具</strong>
+        <span>保持相同配置完成批量转换，确保工具之间可公平比较。</span>
+      </div>
+      <div class="conversion-arrow" aria-hidden="true">&#8594;</div>
+      <div class="conversion-stage">
+        <span class="conversion-stage-label">OUTPUT</span>
+        <strong>Markdown 文件</strong>
+        <span>文件名与对应 PDF 一致，仅将扩展名改为 .md。</span>
+      </div>
+    </div>
+    <div class="conversion-note">此步骤在你的转换工具中完成；平台不会修改或预处理工具输出。</div>
+  </section>
+
+  <!-- Step 3: Upload Markdown -->
+  <section class="card workflow-card workflow-section" id="workflow-step-3" data-workflow-step="3">
+    <div class="section-heading">
+      <div>
+        <div class="card-title">
+          <span class="step-num">03</span>
           上传转换结果
           <span class="tooltip">?<span class="tooltip-text"><strong>文件名必须与 PDF 一致</strong>，仅后缀不同。<br>例如：<code>text_simple__10k.pdf</code> &rarr; <code>text_simple__10k.md</code><br>支持批量上传，可拖拽或点击选择。</span></span>
         </div>
@@ -1146,7 +1249,7 @@ body {
       <span class="tooltip">?<span class="tooltip-text"><strong>评测维度与权重：</strong><ul><li>内容准确性（30%）</li><li>格式保真度（25%）</li><li>表格（25%）</li><li>格式质量（10%）</li><li>语义相似度（10%，默认关闭）</li></ul>总分 = 各维度得分的加权平均（0-100 分）。</span></span>
       <span class="file-count" id="fileCount"></span>
     </div>
-  </div>
+  </section>
 
   <!-- Loading -->
   <div class="card loading-overlay" id="loadingOverlay">
@@ -1154,10 +1257,18 @@ body {
     <p id="loadingText">正在评测，请稍候...</p>
   </div>
 
-  <!-- Step 3: Results -->
-  <div class="card results-section workflow-card" id="resultsSection">
+  <!-- Step 4: Results -->
+  <section class="workflow-section" id="workflow-step-4" data-workflow-step="4">
+    <div class="card workflow-card results-placeholder" id="resultsPlaceholder">
+      <div class="results-placeholder-copy">
+        <span class="step-num">04</span>
+        <div><strong>查看评测报告</strong><span>完成步骤 03 并开始评测后，综合分、维度得分与文档明细会显示在这里。</span></div>
+      </div>
+      <span class="results-placeholder-status">等待评测</span>
+    </div>
+    <div class="card results-section workflow-card" id="resultsSection">
     <div class="card-title">
-      <span class="step-num">03</span>
+      <span class="step-num">04</span>
       评测结果
     </div>
 
@@ -1182,8 +1293,10 @@ body {
     <button class="btn btn-outline" onclick="downloadReport()">
       下载完整报告 (JSON)
     </button>
-  </div>
+    </div>
+  </section>
 
+  </main>
 </div>
 
 <!-- Upload Dataset Modal -->
@@ -1236,19 +1349,6 @@ const leaderboardDimLabels = {
   semantic: '语义相似度'
 };
 
-// ── Toggle usage guide ──
-function toggleGuide() {
-  var body = document.getElementById('guideBody');
-  var toggle = document.getElementById('guideToggle');
-  if (body.classList.contains('collapsed')) {
-    body.classList.remove('collapsed');
-    toggle.innerHTML = '\u6536\u8d77 \u25B2';
-  } else {
-    body.classList.add('collapsed');
-    toggle.innerHTML = '\u5c55\u5f00 \u25BC';
-  }
-}
-
 // ── Init: load dataset list + leaderboard ──
 function positionTooltip(trigger) {
   var bubble = trigger.querySelector('.tooltip-text');
@@ -1300,6 +1400,59 @@ function setupTooltips() {
   });
 }
 
+function setActiveWorkflowStep(step) {
+  document.querySelectorAll('.workflow-nav-link').forEach(function(link) {
+    var linkStep = Number(link.dataset.navStep);
+    var isActive = linkStep === step;
+    link.classList.toggle('active', isActive);
+    link.classList.toggle('completed', linkStep < step);
+    if (isActive) {
+      link.setAttribute('aria-current', 'step');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+}
+
+function updateWorkflowNavigation() {
+  var sections = Array.from(document.querySelectorAll('[data-workflow-step]'));
+  if (sections.length === 0) return;
+  var marker = window.innerHeight * 0.36;
+  var activeStep = 1;
+  sections.forEach(function(section) {
+    if (section.getBoundingClientRect().top <= marker) {
+      activeStep = Number(section.dataset.workflowStep);
+    }
+  });
+  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8) {
+    activeStep = Number(sections[sections.length - 1].dataset.workflowStep);
+  }
+  setActiveWorkflowStep(activeStep);
+}
+
+function setupWorkflowNavigation() {
+  if (document.documentElement.dataset.workflowNavBound === 'true') {
+    updateWorkflowNavigation();
+    return;
+  }
+  document.documentElement.dataset.workflowNavBound = 'true';
+  var ticking = false;
+  document.querySelectorAll('.workflow-nav-link').forEach(function(link) {
+    link.addEventListener('click', function() {
+      setActiveWorkflowStep(Number(link.dataset.navStep));
+    });
+  });
+  window.addEventListener('scroll', function() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function() {
+      updateWorkflowNavigation();
+      ticking = false;
+    });
+  }, { passive: true });
+  updateWorkflowNavigation();
+}
+
 window.addEventListener('resize', function() {
   document.querySelectorAll('.tooltip.is-open').forEach(positionTooltip);
 });
@@ -1309,6 +1462,7 @@ window.addEventListener('scroll', function() {
 
 async function init() {
   setupTooltips();
+  setupWorkflowNavigation();
   try {
     const res = await fetch('/api/evaluation/datasets');
     const data = await res.json();
@@ -1563,7 +1717,7 @@ function downloadDataset() {
   window.location.href = '/api/evaluation/datasets/' + encodeURIComponent(currentDatasetId) + '/download';
 }
 
-// ── Step 2: Upload ──
+// ── Step 3: Upload ──
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
@@ -1629,11 +1783,15 @@ async function startEval() {
   const btn = document.getElementById('evalBtn');
   const overlay = document.getElementById('loadingOverlay');
   const resultsSection = document.getElementById('resultsSection');
+  const resultsPlaceholder = document.getElementById('resultsPlaceholder');
+  const placeholderStatus = resultsPlaceholder.querySelector('.results-placeholder-status');
 
   btn.disabled = true;
   btn.textContent = '评测中...';
   overlay.classList.add('show');
   resultsSection.classList.remove('show');
+  resultsPlaceholder.style.display = 'flex';
+  placeholderStatus.textContent = '正在评测';
 
   const formData = new FormData();
   for (const f of selectedFiles) {
@@ -1650,6 +1808,7 @@ async function startEval() {
     lastResult = await res.json();
     renderResults(lastResult);
   } catch (e) {
+    placeholderStatus.textContent = '等待评测';
     alert('评测请求失败: ' + e.message);
   } finally {
     overlay.classList.remove('show');
@@ -1661,7 +1820,9 @@ async function startEval() {
 // ── Render Results ──
 function renderResults(data) {
   const section = document.getElementById('resultsSection');
+  document.getElementById('resultsPlaceholder').style.display = 'none';
   section.classList.add('show');
+  setActiveWorkflowStep(4);
 
   const total = data.total || 0;
   const evaluated = data.evaluated || 0;
