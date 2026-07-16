@@ -121,6 +121,15 @@ class TestDatasetRegistry:
         with pytest.raises(ValueError, match="must contain only"):
             registry.register(name="bad/name!", path=ds_path)
 
+    def test_register_dataset_without_usable_cases_raises(self, registry, temp_dirs):
+        """Directories without usable evaluation cases must not be registered."""
+        _, user_dir = temp_dirs
+        empty_dataset = user_dir / "empty_dataset"
+        empty_dataset.mkdir()
+
+        with pytest.raises(ValueError, match="contains no usable evaluation cases"):
+            registry.register(name="empty_dataset", path=empty_dataset)
+
     def test_get_nonexistent_returns_none(self, registry):
         """Getting an unknown ID should return None."""
         assert registry.get("nonexistent") is None
@@ -154,6 +163,53 @@ class TestDatasetRegistry:
         assert entry is not None
         assert entry.is_builtin is False
         assert "persist.pdf" in entry.runner.available_pdfs
+
+    def test_startup_ignores_hidden_staging_directory(self, temp_dirs):
+        """A hidden staging directory must never become a dataset."""
+        builtin_dir, user_dir = temp_dirs
+        _make_dataset_dir(user_dir, ".staging", "staged.pdf")
+
+        loaded = DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+
+        assert all(entry.name != ".staging" for entry in loaded.list_all())
+
+    def test_startup_ignores_empty_and_manifest_only_directories(self, temp_dirs):
+        """Metadata and empty directories are not valid datasets."""
+        builtin_dir, user_dir = temp_dirs
+        (user_dir / "empty").mkdir(parents=True)
+        manifest_only = user_dir / "manifest_only"
+        manifest_only.mkdir()
+        _write_jsonl(manifest_only / "manifest.jsonl", [{"pdf": "metadata.pdf"}])
+
+        loaded = DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+
+        names = {entry.name for entry in loaded.list_all()}
+        assert "empty" not in names
+        assert "manifest_only" not in names
+
+    def test_refresh_ignores_staging_and_loads_published_dataset(self, registry, temp_dirs):
+        """Refresh should expose only the completed published dataset."""
+        _, user_dir = temp_dirs
+        _make_dataset_dir(user_dir, ".staging", "staged.pdf")
+        _make_dataset_dir(user_dir, "published", "published.pdf")
+
+        changes = registry.refresh()
+
+        assert changes["added"] == ["published"]
+        assert registry.get("published") is not None
+        assert all(entry.name != ".staging" for entry in registry.list_all())
+
+    def test_refresh_removes_dataset_that_becomes_invalid(self, registry, temp_dirs):
+        """Refresh should unregister a dataset whose rule files disappear."""
+        _, user_dir = temp_dirs
+        dataset_path = _make_dataset_dir(user_dir, "transient", "transient.pdf")
+        registry.refresh()
+        (dataset_path / "text_content.jsonl").unlink()
+
+        changes = registry.refresh()
+
+        assert changes["removed"] == ["transient"]
+        assert registry.get("transient") is None
 
     def test_delete_user_dataset_removes_registry_entry_and_directory(self, registry, temp_dirs):
         """Deleting a user dataset should remove both state and files."""

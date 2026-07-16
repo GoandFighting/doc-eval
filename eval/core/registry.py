@@ -14,6 +14,7 @@ from eval.core.runner import AsyncEvalRunner
 logger = logging.getLogger(__name__)
 
 _NAME_RE = re.compile(r"^[a-zA-Z0-9_\u4e00-\u9fff\-]+$")
+_METADATA_JSONL_FILES = {"manifest.jsonl"}
 
 
 @dataclass
@@ -102,9 +103,7 @@ class DatasetRegistry:
                 logger.exception("Failed to load built-in dataset: %s", self._builtin_dir)
 
         if self._user_dir.exists():
-            for child in sorted(self._user_dir.iterdir()):
-                if not child.is_dir():
-                    continue
+            for child in self._iter_user_dataset_dirs():
                 try:
                     entry = self._create_entry(
                         name=child.name,
@@ -120,6 +119,8 @@ class DatasetRegistry:
         """Create a DatasetEntry with a fresh AsyncEvalRunner."""
         config = EvalConfig(dataset_dir=path)
         runner = AsyncEvalRunner(config)
+        if not runner.available_pdfs:
+            raise ValueError(f"Dataset '{name}' contains no usable evaluation cases")
         return DatasetEntry(
             id=self._name_to_id(name),
             name=name,
@@ -127,6 +128,32 @@ class DatasetRegistry:
             is_builtin=is_builtin,
             runner=runner,
         )
+
+    @staticmethod
+    def _has_evaluation_files(path: Path) -> bool:
+        """Return whether a directory contains supported evaluation rules."""
+        has_sidecar_tests = any(path.rglob("*.test.json"))
+        has_rule_jsonl = any(
+            jsonl_path.name.casefold() not in _METADATA_JSONL_FILES
+            for jsonl_path in path.glob("*.jsonl")
+        )
+        return has_sidecar_tests or has_rule_jsonl
+
+    def _is_discoverable_user_dataset(self, path: Path) -> bool:
+        """Return whether a user directory should be exposed as a dataset."""
+        if not path.is_dir():
+            return False
+        if not _NAME_RE.fullmatch(path.name):
+            return False
+        return self._has_evaluation_files(path)
+
+    def _iter_user_dataset_dirs(self):
+        """Yield valid user dataset directories, excluding staging metadata."""
+        for child in sorted(self._user_dir.iterdir()):
+            if self._is_discoverable_user_dataset(child):
+                yield child
+            elif child.is_dir():
+                logger.debug("Skipping non-dataset directory: %s", child)
 
     @staticmethod
     def _name_to_id(name: str) -> str:
@@ -229,15 +256,13 @@ class DatasetRegistry:
         for entry_id, entry in list(self._entries.items()):
             if entry.is_builtin:
                 continue
-            if not entry.path.exists():
+            if not self._is_discoverable_user_dataset(entry.path):
                 del self._entries[entry_id]
                 removed.append(entry_id)
-                logger.info("Removed stale dataset: %s", entry_id)
+                logger.info("Removed stale or invalid dataset: %s", entry_id)
 
         if self._user_dir.exists():
-            for child in sorted(self._user_dir.iterdir()):
-                if not child.is_dir():
-                    continue
+            for child in self._iter_user_dataset_dirs():
                 child_id = self._name_to_id(child.name)
                 if child_id in self._entries:
                     continue
