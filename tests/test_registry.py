@@ -86,6 +86,28 @@ class TestDatasetRegistry:
         assert entry.is_builtin is False
         assert "custom.pdf" in entry.runner.available_pdfs
 
+    def test_manifest_jsonl_is_not_loaded_as_evaluation_data(self, registry, temp_dirs):
+        """Dataset package metadata must not create an evaluation PDF entry."""
+        _, user_dir = temp_dirs
+        ds_path = _make_dataset_dir(user_dir, "with_manifest", "custom.pdf")
+        _write_jsonl(
+            ds_path / "manifest.jsonl",
+            [
+                {
+                    "document_id": "metadata_only",
+                    "department": "qa",
+                    "pdf": "metadata_only.pdf",
+                    "rules": 1,
+                    "tables": 0,
+                }
+            ],
+        )
+
+        entry = registry.register(name="with_manifest", path=ds_path)
+
+        assert "custom.pdf" in entry.runner.available_pdfs
+        assert "metadata_only.pdf" not in entry.runner.available_pdfs
+
     def test_register_duplicate_name_raises(self, registry):
         """Registering a duplicate name should raise ValueError."""
         with pytest.raises(ValueError, match="already exists"):

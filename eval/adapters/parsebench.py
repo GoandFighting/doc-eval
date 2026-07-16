@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -20,6 +22,52 @@ logger = logging.getLogger(__name__)
 
 _FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
 _SEP_CELL_RE = re.compile(r"^:?-+:?$")
+_METADATA_JSONL_FILES = {"manifest.jsonl"}
+
+
+def _load_dataset_test_cases(dataset_dir: Path) -> list:
+    """Load ParseBench cases without passing package metadata to its loader.
+
+    ParseBench treats every root-level ``*.jsonl`` file as evaluation rules.
+    Dataset-builder's ``manifest.jsonl`` is package metadata, so JSONL-only
+    datasets are loaded through a temporary view that omits metadata files.
+    Test-case file paths are then mapped back to the real dataset directory.
+    """
+    metadata_files = [
+        path
+        for path in dataset_dir.glob("*.jsonl")
+        if path.name.casefold() in _METADATA_JSONL_FILES
+    ]
+    has_sidecar_tests = any(dataset_dir.rglob("*.test.json"))
+    if not metadata_files or has_sidecar_tests:
+        return load_test_cases(root_dir=dataset_dir)
+
+    with tempfile.TemporaryDirectory(prefix="doc_eval_jsonl_") as temp_dir:
+        shadow_root = Path(temp_dir)
+        for jsonl_path in dataset_dir.glob("*.jsonl"):
+            if jsonl_path.name.casefold() in _METADATA_JSONL_FILES:
+                continue
+            shutil.copy2(jsonl_path, shadow_root / jsonl_path.name)
+
+        expected_markdown = dataset_dir / "expected_markdown.json"
+        if expected_markdown.is_file():
+            shutil.copy2(expected_markdown, shadow_root / expected_markdown.name)
+
+        test_cases = load_test_cases(root_dir=shadow_root)
+        shadow_root = shadow_root.resolve()
+        remapped_cases = []
+        for test_case in test_cases:
+            try:
+                relative_path = test_case.file_path.relative_to(shadow_root)
+            except ValueError:
+                remapped_cases.append(test_case)
+                continue
+            remapped_cases.append(
+                test_case.model_copy(
+                    update={"file_path": (dataset_dir / relative_path).resolve()}
+                )
+            )
+        return remapped_cases
 
 
 def _is_separator_row(line: str) -> bool:
@@ -136,8 +184,12 @@ class ParseBenchAdapter:
         ``layout/`` are excluded -- these are ``order``-type rules from
         ``layout.jsonl`` that ParseBench loads as ParseTestCase but which
         belong to the layout dimension, not text/table evaluation.
+
+        Dataset-builder also publishes ``manifest.jsonl`` as package metadata;
+        :func:`_load_dataset_test_cases` excludes it before ParseBench scans the
+        dataset.
         """
-        all_cases = load_test_cases(root_dir=dataset_dir)
+        all_cases = _load_dataset_test_cases(dataset_dir)
         grouped: dict[str, list[ParseTestCase]] = {}
         for tc in all_cases:
             if not isinstance(tc, ParseTestCase):
