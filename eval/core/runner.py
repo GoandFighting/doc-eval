@@ -67,15 +67,21 @@ class AsyncEvalRunner:
         """
         t_start = time.monotonic()
 
-        # 1. ParseBench evaluation (CPU-bound → thread)
-        pb_metrics: list[MetricValue] = await asyncio.to_thread(
-            self._parsebench.evaluate,
+        # ParseBench uses SIGALRM for timeouts on Linux. Signal handlers can
+        # only be installed from the main interpreter thread, so this phase
+        # must run synchronously on the event-loop thread. Batch ParseBench
+        # work is therefore intentionally serial in this compatibility mode.
+        pb_metrics: list[MetricValue] = self._parsebench.evaluate(
             request.converted_md,
             request.pdf_name,
         )
 
         # 2. Extract dimension scores from ParseBench metrics
         dimensions = self._extract_dimensions(pb_metrics)
+        expected_dimensions = self._parsebench.expected_dimensions(request.pdf_name)
+        actual_dimensions = {dimension.dimension for dimension in dimensions}
+        missing_dimensions = sorted(expected_dimensions - actual_dimensions)
+        warnings = self._missing_dimension_warnings(missing_dimensions)
 
         # 3. L1 format quality (fast, synchronous)
         if self._config.enable_l1:
@@ -118,12 +124,29 @@ class AsyncEvalRunner:
             overall_score=overall,
             dimensions=dimensions,
             pdf_name=request.pdf_name,
+            complete=not missing_dimensions,
+            warnings=warnings,
             metadata={
                 "elapsed_seconds": round(elapsed, 3),
                 "version": "0.1.0",
                 "metric_count": len(pb_metrics),
+                "missing_dimensions": missing_dimensions,
             },
         )
+
+    @staticmethod
+    def _missing_dimension_warnings(missing_dimensions: list[str]) -> list[str]:
+        """Build a clear warning when ParseBench returns partial metrics."""
+        if not missing_dimensions:
+            return []
+
+        labels = {
+            "content_faithfulness": "内容准确性",
+            "semantic_formatting": "格式保真度",
+            "tables": "表格还原",
+        }
+        missing = "、".join(labels.get(name, name) for name in missing_dimensions)
+        return [f"评测结果不完整，缺少维度：{missing}。当前总分仅基于已返回维度计算。"]
 
     def _extract_dimensions(self, metrics: list[MetricValue]) -> list[DimensionScore]:
         """Map ParseBench MetricValue list to DimensionScore list.
@@ -286,12 +309,17 @@ class AsyncEvalRunner:
 
         results: list[EvalResponse] = []
         errors: list[dict[str, str]] = []
+        warnings: list[dict[str, str]] = []
 
         for req, raw in zip(request.items, raw_results, strict=False):
             if isinstance(raw, Exception):
                 errors.append({"pdf_name": req.pdf_name, "error": str(raw)})
             else:
                 results.append(raw)
+                warnings.extend(
+                    {"pdf_name": raw.pdf_name, "warning": warning}
+                    for warning in raw.warnings
+                )
 
         summary = self._build_summary(results)
 
@@ -301,6 +329,7 @@ class AsyncEvalRunner:
             failed=len(errors),
             results=results,
             errors=errors,
+            warnings=warnings,
             summary=summary,
         )
 

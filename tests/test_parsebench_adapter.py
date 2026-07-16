@@ -24,6 +24,16 @@ class TestParseBenchAdapter:
         text_pdfs = [p for p in adapter.available_pdfs if p.startswith("text_")]
         assert len(text_pdfs) > 0
 
+    def test_expected_dimensions_follow_test_case_types(self, adapter):
+        table_pdf = next(p for p in adapter.available_pdfs if "page" in p)
+        text_pdf = next(p for p in adapter.available_pdfs if p.startswith("text_"))
+
+        assert adapter.expected_dimensions(table_pdf) == {"tables"}
+        assert adapter.expected_dimensions(text_pdf) == {
+            "content_faithfulness",
+            "semantic_formatting",
+        }
+
     def test_evaluate_table_with_expected_md(self, adapter):
         pdf_name = adapter.available_pdfs[0]
         test_cases = adapter._test_cases.get(pdf_name, [])
@@ -50,3 +60,15 @@ class TestParseBenchAdapter:
     def test_unknown_pdf_raises_keyerror(self, adapter):
         with pytest.raises(KeyError):
             adapter.evaluate("some markdown", "nonexistent.pdf")
+
+    def test_all_parsebench_failures_are_not_silenced(self, adapter, monkeypatch):
+        """A total ParseBench failure must not degrade to an L1-only result."""
+        pdf_name = adapter.available_pdfs[0]
+
+        def fail_with_signal_error(*_):
+            raise ValueError("signal only works in main thread of the main interpreter")
+
+        monkeypatch.setattr(adapter._evaluator, "evaluate", fail_with_signal_error)
+
+        with pytest.raises(RuntimeError, match="must run on the main thread"):
+            adapter.evaluate("# test", pdf_name)

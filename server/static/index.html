@@ -724,6 +724,16 @@ body {
   font-family: "SF Mono", "Fira Code", monospace;
   padding: 3px 0;
 }
+.error-list.warnings-only {
+  background: var(--warning-light);
+  border: 1px solid #fcd34d;
+}
+.error-list .warning-title { color: #92400e; }
+.error-list .warning-item {
+  color: #78350f;
+  font-size: 13px;
+  padding: 3px 0;
+}
 
 /* Modal */
 .modal-overlay {
@@ -1994,13 +2004,23 @@ function renderResults(data) {
   document.getElementById('dimBars').innerHTML = barsHtml;
 
   const errors = data.errors || [];
+  const warnings = data.warnings || [];
   const errorList = document.getElementById('errorList');
-  if (errors.length > 0) {
+  if (errors.length > 0 || warnings.length > 0) {
     errorList.style.display = 'block';
-    errorList.innerHTML = '<h4>&#9888; 失败 (' + errors.length + ')</h4>' +
-      errors.map(e => '<div class="error-item">' + e.pdf_name + ' \u2014 ' + e.error + '</div>').join('');
+    errorList.classList.toggle('warnings-only', errors.length === 0);
+    errorList.innerHTML =
+      (errors.length > 0
+        ? '<h4>&#9888; 失败 (' + errors.length + ')</h4>' +
+          errors.map(e => '<div class="error-item">' + e.pdf_name + ' \u2014 ' + e.error + '</div>').join('')
+        : '') +
+      (warnings.length > 0
+        ? '<h4 class="warning-title">&#9888; 评测不完整 (' + warnings.length + ')</h4>' +
+          warnings.map(w => '<div class="warning-item">' + w.pdf_name + ' \u2014 ' + w.warning + '</div>').join('')
+        : '');
   } else {
     errorList.style.display = 'none';
+    errorList.classList.remove('warnings-only');
   }
 
   const dimKeys = Object.keys(dimAvg);
@@ -2019,7 +2039,10 @@ function renderResults(data) {
       dims[d.dimension] = d.score;
     }
     let cells = '<td class="pdf-name" title="' + r.pdf_name + '">' + r.pdf_name + '</td>';
-    cells += '<td class="score-cell ' + scoreClass(r.overall_score) + '">' + r.overall_score.toFixed(1) + '</td>';
+    const scoreSuffix = r.complete === false ? ' *' : '';
+    const scoreTitle = r.complete === false ? ' title="该总分基于不完整维度计算"' : '';
+    cells += '<td class="score-cell ' + scoreClass(r.overall_score) + '"' + scoreTitle + '>' +
+      r.overall_score.toFixed(1) + scoreSuffix + '</td>';
     for (const dim of dimKeys) {
       cells += '<td class="' + scoreCellClass(dims[dim]) + '">' + fmtScore(dims[dim]) + '</td>';
     }

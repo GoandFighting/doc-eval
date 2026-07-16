@@ -158,3 +158,27 @@ class TestBatchEval:
         assert response.evaluated == 0
         assert response.failed == 0
         assert response.summary.avg_overall == 0.0
+
+    def test_batch_collects_partial_result_warnings(self, runner, monkeypatch):
+        """Batch responses should surface warnings from incomplete documents."""
+        pdf_name = runner.available_pdfs[0]
+        monkeypatch.setattr(runner._parsebench, "evaluate", lambda *_: [])
+        monkeypatch.setattr(
+            runner._parsebench,
+            "expected_dimensions",
+            lambda _: {"semantic_formatting"},
+        )
+
+        response = asyncio.run(
+            runner.evaluate_batch(
+                BatchEvalRequest(
+                    items=[EvalRequest(converted_md="# test", pdf_name=pdf_name)]
+                )
+            )
+        )
+
+        assert response.evaluated == 1
+        assert response.failed == 0
+        assert response.results[0].complete is False
+        assert response.warnings[0]["pdf_name"] == pdf_name
+        assert "格式保真度" in response.warnings[0]["warning"]

@@ -1,6 +1,7 @@
 """Tests for AsyncEvalRunner end-to-end."""
 
 import asyncio
+import threading
 from pathlib import Path
 
 import pytest
@@ -70,3 +71,41 @@ class TestAsyncEvalRunner:
         assert "overall_score" in d
         assert "dimensions" in d
         assert isinstance(d["dimensions"], list)
+
+    def test_parsebench_evaluation_runs_on_main_thread(self, runner, monkeypatch):
+        """Linux signal-based timeouts require ParseBench on the main thread."""
+        observed_threads = []
+        pdf_name = runner.available_pdfs[0]
+
+        def fake_evaluate(converted_md, requested_pdf):
+            observed_threads.append(threading.current_thread())
+            assert requested_pdf == pdf_name
+            return []
+
+        monkeypatch.setattr(runner._parsebench, "evaluate", fake_evaluate)
+        monkeypatch.setattr(runner._parsebench, "expected_dimensions", lambda _: set())
+
+        asyncio.run(runner.evaluate(EvalRequest(converted_md="# test", pdf_name=pdf_name)))
+
+        assert observed_threads == [threading.main_thread()]
+
+    def test_missing_parsebench_dimension_is_reported(self, runner, monkeypatch):
+        """Partial ParseBench output must be explicit in the API response."""
+        pdf_name = runner.available_pdfs[0]
+        monkeypatch.setattr(runner._parsebench, "evaluate", lambda *_: [])
+        monkeypatch.setattr(
+            runner._parsebench,
+            "expected_dimensions",
+            lambda _: {"content_faithfulness"},
+        )
+
+        response = asyncio.run(
+            runner.evaluate(EvalRequest(converted_md="# test", pdf_name=pdf_name))
+        )
+        payload = response.to_dict()
+
+        assert response.complete is False
+        assert response.metadata["missing_dimensions"] == ["content_faithfulness"]
+        assert "内容准确性" in response.warnings[0]
+        assert payload["complete"] is False
+        assert payload["warnings"] == response.warnings

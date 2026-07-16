@@ -42,12 +42,16 @@ class EvalResponse:
     :param overall_score: Weighted score across all dimensions (0-100).
     :param dimensions: Per-dimension scores.
     :param pdf_name: PDF file name that was evaluated.
+    :param complete: Whether all expected ParseBench dimensions were produced.
+    :param warnings: Human-readable warnings for partial results.
     :param metadata: Run-level metadata (timing, version, etc.).
     """
 
     overall_score: float
     dimensions: list[DimensionScore] = field(default_factory=list)
     pdf_name: str = ""
+    complete: bool = True
+    warnings: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,6 +59,8 @@ class EvalResponse:
         return {
             "overall_score": round(self.overall_score, 2),
             "pdf_name": self.pdf_name,
+            "complete": self.complete,
+            "warnings": self.warnings,
             "dimensions": [
                 {
                     "dimension": d.dimension,
@@ -114,6 +120,7 @@ class BatchEvalResponse:
     :param failed: Number of failed evaluations.
     :param results: List of successful EvalResponse objects.
     :param errors: List of error dicts [{pdf_name, error}].
+    :param warnings: List of partial-result warnings [{pdf_name, warning}].
     :param summary: Aggregated batch statistics.
     """
 
@@ -122,6 +129,7 @@ class BatchEvalResponse:
     failed: int = 0
     results: list[EvalResponse] = field(default_factory=list)
     errors: list[dict[str, str]] = field(default_factory=list)
+    warnings: list[dict[str, str]] = field(default_factory=list)
     summary: BatchSummary = field(default_factory=BatchSummary)
 
     def to_dict(self) -> dict[str, Any]:
@@ -131,5 +139,6 @@ class BatchEvalResponse:
             "failed": self.failed,
             "results": [r.to_dict() for r in self.results],
             "errors": self.errors,
+            "warnings": self.warnings,
             "summary": self.summary.to_dict(),
         }

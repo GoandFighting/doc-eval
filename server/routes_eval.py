@@ -76,6 +76,7 @@ async def eval_batch(
             "failed": len(skipped),
             "results": [],
             "errors": skipped,
+            "warnings": [],
             "summary": {},
         }
 

@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 _FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
 _SEP_CELL_RE = re.compile(r"^:?-+:?$")
 _METADATA_JSONL_FILES = {"manifest.jsonl"}
+_SIGNAL_MAIN_THREAD_ERROR = "signal only works in main thread"
 
 
 def _load_dataset_test_cases(dataset_dir: Path) -> list:
@@ -217,6 +218,25 @@ class ParseBenchAdapter:
         """Check whether test cases exist for the given PDF."""
         return pdf_name in self._test_cases
 
+    def expected_dimensions(self, pdf_name: str) -> set[str]:
+        """Return ParseBench dimensions expected for a PDF's test cases."""
+        test_cases = self._test_cases.get(pdf_name)
+        if not test_cases:
+            raise KeyError(f"No test case found for PDF: {pdf_name}")
+
+        dimensions: set[str] = set()
+        for test_case in test_cases:
+            tags = {str(tag).casefold() for tag in (test_case.tags or [])}
+            if "text_content" in tags:
+                dimensions.add("content_faithfulness")
+            if "text_formatting" in tags:
+                dimensions.add("semantic_formatting")
+            if test_case.test_id.startswith("table/") or (
+                test_case.expected_markdown and "<table" in test_case.expected_markdown
+            ):
+                dimensions.add("tables")
+        return dimensions
+
     def evaluate(self, converted_md: str, pdf_name: str) -> list[MetricValue]:
         """Run ParseBench evaluation for a single document.
 
@@ -247,6 +267,7 @@ class ParseBenchAdapter:
         html_ir = self._wrap_input(html_converted, pdf_name) if needs_table_run else None
 
         all_metrics: list[MetricValue] = []
+        failures: list[str] = []
 
         for tc in test_cases:
             try:
@@ -267,12 +288,23 @@ class ParseBenchAdapter:
                     metrics.extend(table_metrics)
 
                 all_metrics.extend(metrics)
-            except Exception:
+            except Exception as exc:
+                if _SIGNAL_MAIN_THREAD_ERROR in str(exc):
+                    raise RuntimeError(
+                        "ParseBench signal-based evaluation must run on the main thread"
+                    ) from exc
+                failures.append(f"{tc.test_id}: {exc}")
                 logger.exception(
                     "Evaluation failed for test_id=%s (pdf=%s)",
                     tc.test_id,
                     pdf_name,
                 )
+
+        if not all_metrics:
+            detail = f" First failure: {failures[0]}" if failures else ""
+            raise RuntimeError(
+                f"ParseBench returned no metrics for PDF '{pdf_name}'.{detail}"
+            )
 
         return all_metrics
 
