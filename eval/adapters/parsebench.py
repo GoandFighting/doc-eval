@@ -166,6 +166,52 @@ def _is_table_metric(name: str) -> bool:
     return name.startswith(_TABLE_METRIC_PREFIXES)
 
 
+def _add_missing_formatting_composite(
+    metrics: list[MetricValue],
+    test_case: ParseTestCase,
+) -> None:
+    """Add a formatting composite for rule types omitted by ParseBench.
+
+    ParseBench evaluates italic and underline rules but does not include those
+    types in its normalized styling categories. A formatting-only case made up
+    of those rules therefore has a valid ``rule_pass_rate`` but no
+    ``semantic_formatting`` metric. Preserve that result as the formatting
+    dimension so the rules affect the score and completeness check.
+    """
+    tags = {str(tag).casefold() for tag in (test_case.tags or [])}
+    metric_names = {metric.metric_name for metric in metrics}
+    if "text_formatting" not in tags or "semantic_formatting" in metric_names:
+        return
+
+    rule_pass_rate = next(
+        (metric.value for metric in metrics if metric.metric_name == "rule_pass_rate"),
+        None,
+    )
+    if rule_pass_rate is None:
+        return
+
+    metadata = {
+        "source": "parsebench:formatting_rule_pass_rate",
+        "fallback": True,
+        "reason": "ParseBench returned formatting rule metrics without a formatting composite",
+    }
+    if "normalized_text_styling" not in metric_names:
+        metrics.append(
+            MetricValue(
+                metric_name="normalized_text_styling",
+                value=rule_pass_rate,
+                metadata=metadata,
+            )
+        )
+    metrics.append(
+        MetricValue(
+            metric_name="semantic_formatting",
+            value=rule_pass_rate,
+            metadata=metadata,
+        )
+    )
+
+
 class ParseBenchAdapter:
     """Bridge to ParseBench's evaluation system.
 
@@ -329,6 +375,7 @@ class ParseBenchAdapter:
                     result = self._evaluator.evaluate(original_ir, tc)
                     metrics = list(result.metrics)
 
+                _add_missing_formatting_composite(metrics, tc)
                 all_metrics.extend(metrics)
             except Exception as exc:
                 if _SIGNAL_MAIN_THREAD_ERROR in str(exc):

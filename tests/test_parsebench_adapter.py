@@ -57,6 +57,26 @@ class TestParseBenchAdapter:
         metrics = adapter.evaluate("", pdf_name)
         assert len(metrics) > 0
 
+    @pytest.mark.parametrize(
+        "pdf_name",
+        [
+            "text_simple__contract2.pdf",
+            "text_simple__myctophidae.pdf",
+            "text_simple__reso.pdf",
+            "text_simple__share.pdf",
+            "text_simple__smithville.pdf",
+            "text_simple__wired.pdf",
+        ],
+    )
+    def test_italic_and_underline_cases_receive_formatting_composite(self, adapter, pdf_name):
+        """Unsupported ParseBench styling types must still affect formatting."""
+        metrics = adapter.evaluate("", pdf_name)
+        formatting = [metric for metric in metrics if metric.metric_name == "semantic_formatting"]
+
+        assert len(formatting) == 1
+        assert formatting[0].value == 0.0
+        assert formatting[0].metadata["fallback"] is True
+
     def test_unknown_pdf_raises_keyerror(self, adapter):
         with pytest.raises(KeyError):
             adapter.evaluate("some markdown", "nonexistent.pdf")
