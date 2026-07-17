@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 import tempfile
@@ -10,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 import markdown as md_lib
+from parse_bench.evaluation.evaluators import parse as parse_evaluator_module
 from parse_bench.evaluation.evaluators.parse import ParseEvaluator
 from parse_bench.schemas.evaluation import MetricValue
 from parse_bench.schemas.parse_output import ParseOutput
@@ -24,6 +26,20 @@ _FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
 _SEP_CELL_RE = re.compile(r"^:?-+:?$")
 _METADATA_JSONL_FILES = {"manifest.jsonl"}
 _SIGNAL_MAIN_THREAD_ERROR = "signal only works in main thread"
+
+
+def _compute_table_metrics_inline(
+    expected: str,
+    actual: str,
+    expected_tables: list,
+    actual_tables: list,
+    teds_variants: set[str] | None = None,
+) -> tuple[list[MetricValue], list[MetricValue]]:
+    """Compute exact TEDS and GriTS inline to avoid per-document Windows process startup."""
+    return (
+        parse_evaluator_module._compute_teds_standalone(expected, actual, teds_variants),
+        parse_evaluator_module._compute_grits_standalone(expected_tables, actual_tables),
+    )
 
 
 def _load_dataset_test_cases(dataset_dir: Path) -> list:
@@ -167,11 +183,31 @@ class ParseBenchAdapter:
         enable_teds: bool = True,
         enable_grits: bool = True,
     ) -> None:
+        # ParseBench defaults optional LLM chart normalization to "judge".
+        # This deployment has no Anthropic dependency/key, so every text case
+        # otherwise repeats a failed import and traceback before returning the
+        # unchanged rule scores. Explicit user configuration still wins.
+        os.environ.setdefault("LLAMACLOUD_BENCH_LLM_NORMALIZATION", "off")
+        if os.environ.get("DOC_EVAL_INLINE_TABLE_METRICS", "1").strip().casefold() not in {
+            "0", "false", "no", "off"
+        }:
+            # ParseBench creates a fresh two-process pool for every table
+            # document. Batch-level worker threads already provide bounded
+            # document concurrency on Windows and Linux, so run the same exact
+            # metric functions inline and avoid nested process pools.
+            parse_evaluator_module._compute_table_metrics_parallel = _compute_table_metrics_inline
         self._evaluator = ParseEvaluator(
             enable_rule_based=True,
             enable_teds=enable_teds,
             enable_grits=enable_grits,
             enable_table_record_match=True,
+        )
+        self._rule_only_evaluator = ParseEvaluator(
+            enable_rule_based=True,
+            enable_teds=False,
+            enable_grits=False,
+            enable_structural_consistency=False,
+            enable_table_record_match=False,
         )
         self._test_cases: dict[str, list[ParseTestCase]] = self._load_and_group(dataset_dir)
 
@@ -271,13 +307,16 @@ class ParseBenchAdapter:
 
         for tc in test_cases:
             try:
-                result = self._evaluator.evaluate(original_ir, tc)
-                metrics = list(result.metrics)
-
                 has_table_expected = bool(
                     tc.expected_markdown and "<table" in tc.expected_markdown
                 )
                 if has_table_expected and html_ir is not None:
+                    # The original Markdown is needed only for rule metrics.
+                    # Running the full evaluator here would calculate the
+                    # expensive table metrics once on the original input and
+                    # immediately discard them after the HTML-normalized run.
+                    result = self._rule_only_evaluator.evaluate(original_ir, tc)
+                    metrics = list(result.metrics)
                     html_result = self._evaluator.evaluate(html_ir, tc)
                     table_metrics = [
                         m for m in html_result.metrics if _is_table_metric(m.metric_name)
@@ -286,6 +325,9 @@ class ParseBenchAdapter:
                         m for m in metrics if not _is_table_metric(m.metric_name)
                     ]
                     metrics.extend(table_metrics)
+                else:
+                    result = self._evaluator.evaluate(original_ir, tc)
+                    metrics = list(result.metrics)
 
                 all_metrics.extend(metrics)
             except Exception as exc:

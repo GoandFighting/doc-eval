@@ -666,11 +666,39 @@ body {
 }
 
 /* Results table */
-.results-table-wrap {
-  overflow-x: auto;
-  border-radius: 10px;
+.results-detail-toggle {
+  margin: 20px 0 18px;
   border: 1px solid var(--border);
-  margin-bottom: 18px;
+  border-radius: 10px;
+  background: #fff;
+}
+.results-detail-toggle > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  color: var(--text);
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.results-detail-toggle > summary::-webkit-details-marker { display: none; }
+.results-detail-toggle > summary::after {
+  color: var(--primary);
+  content: '展开 ▾';
+  font-size: 12px;
+  font-weight: 600;
+}
+.results-detail-toggle[open] > summary::after { content: '收起 ▴'; }
+.results-detail-count { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.results-table-wrap {
+  max-height: 520px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
 }
 .results-table {
   width: 100%;
@@ -678,6 +706,9 @@ body {
   font-size: 13px;
 }
 .results-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
   background: #f3f6fa;
   padding: 11px 14px;
   text-align: left;
@@ -886,6 +917,19 @@ body {
 .lb-scale-axis { display: flex; justify-content: space-between; }
 .lb-list { border-top: 1px solid var(--border); }
 .lb-item { border-bottom: 1px solid var(--border); }
+.lb-item.user-entry { background: #eff6ff; box-shadow: inset 3px 0 0 var(--primary); }
+.lb-item.user-entry:hover .lb-main { background: #e8f1ff; }
+.lb-user-badge {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #dbeafe;
+  font-size: 9px;
+  font-weight: 700;
+  vertical-align: middle;
+}
 .lb-main {
   display: grid;
   grid-template-columns: 42px minmax(145px, 1.15fr) minmax(200px, 2fr) 70px 86px 64px;
@@ -965,6 +1009,21 @@ body {
 .lb-expand:hover, .lb-expand:focus-visible { border-color: var(--primary); outline: none; }
 .lb-detail { padding: 2px 12px 16px 64px; background: #fbfdff; }
 .lb-detail[hidden] { display: none; }
+.report-leaderboard {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #fff 100%);
+}
+.report-leaderboard[hidden] { display: none; }
+.report-leaderboard .lb-heading { margin-bottom: 12px; }
+.report-leaderboard-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .lb-detail-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
@@ -1361,19 +1420,56 @@ body {
 
     <div class="dim-bars" id="dimBars"></div>
 
+    <div class="report-leaderboard" id="reportLeaderboardPanel" hidden>
+      <div class="lb-heading">
+        <div>
+          <div class="card-title"><span>&#127942;</span> 本次评测天梯对比</div>
+          <p class="report-leaderboard-note" id="reportLeaderboardNote">
+            已将本次转换工具的完整 newbench 评测结果加入对比；该结果仅展示在本报告中，不影响上方总天梯榜。
+          </p>
+        </div>
+      </div>
+      <div class="lb-toolbar">
+        <div class="lb-meta"><span class="lb-meta-chip">newbench · 175 份文档</span></div>
+        <div class="lb-sort-wrap">
+          <label for="reportLeaderboardSort">排序依据</label>
+          <select class="lb-sort" id="reportLeaderboardSort" onchange="renderReportLeaderboard()">
+            <option value="avg_overall">综合分</option>
+            <option value="content_faithfulness">内容准确性</option>
+            <option value="semantic_formatting">格式保真度</option>
+            <option value="tables">表格</option>
+            <option value="format_quality">格式质量</option>
+            <option value="semantic">语义相似度</option>
+          </select>
+        </div>
+      </div>
+      <div class="lb-scale" aria-hidden="true">
+        <span>名次</span><span>工具</span>
+        <span class="lb-scale-axis"><span>0</span><span>60</span><span>80</span><span>100</span></span>
+        <span>分数</span><span>成功率</span><span></span>
+      </div>
+      <div class="lb-list" id="reportLeaderboardList"></div>
+    </div>
+
     <div class="error-list" id="errorList" style="display:none"></div>
 
-    <div class="results-table-wrap">
-      <table class="results-table" id="resultsTable">
-        <thead>
-          <tr id="resultsHead">
-            <th>PDF 文件名</th>
-            <th>总分</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody"></tbody>
-      </table>
-    </div>
+    <details class="results-detail-toggle" id="resultsDetailToggle">
+      <summary>
+        <span>文档评测明细</span>
+        <span class="results-detail-count" id="resultsDetailCount"></span>
+      </summary>
+      <div class="results-table-wrap">
+        <table class="results-table" id="resultsTable">
+          <thead>
+            <tr id="resultsHead">
+              <th>PDF 文件名</th>
+              <th>总分</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </details>
 
     <button class="btn btn-outline" onclick="downloadReport()">
       下载完整报告 (JSON)
@@ -1391,6 +1487,7 @@ let currentDatasetId = null;
 let datasetInfo = null;
 let lastResult = null;
 let leaderboardData = { tools: [], meta: {} };
+let reportLeaderboardData = null;
 
 const leaderboardDimLabels = {
   content_faithfulness: '内容准确性',
@@ -1712,14 +1809,108 @@ function leaderboardScore(tool, sortKey) {
 }
 
 function renderLeaderboard() {
-  var el = document.getElementById('leaderboardList');
-  var tools = (leaderboardData.tools || []).slice();
+  renderLeaderboardList(
+    'leaderboardList',
+    leaderboardData,
+    document.getElementById('leaderboardSort').value
+  );
+}
+
+function percentile(values, ratio) {
+  if (!values.length) return 0;
+  var position = (values.length - 1) * ratio;
+  var lower = Math.floor(position);
+  var upper = Math.ceil(position);
+  if (lower === upper) return values[lower];
+  return values[lower] + (values[upper] - values[lower]) * (position - lower);
+}
+
+function scoreDistributionFromResults(results) {
+  var scores = (results || []).map(function(item) {
+    return Number(item.overall_score);
+  }).filter(Number.isFinite).sort(function(a, b) { return a - b; });
+  if (!scores.length) return {};
+
+  var mean = scores.reduce(function(total, score) { return total + score; }, 0) / scores.length;
+  var margin = 0;
+  if (scores.length > 1) {
+    var variance = scores.reduce(function(total, score) {
+      return total + Math.pow(score - mean, 2);
+    }, 0) / (scores.length - 1);
+    margin = 1.96 * Math.sqrt(variance) / Math.sqrt(scores.length);
+  }
+  return {
+    median: percentile(scores, 0.5),
+    p25: percentile(scores, 0.25),
+    p75: percentile(scores, 0.75),
+    ci95_low: Math.max(0, mean - margin),
+    ci95_high: Math.min(100, mean + margin)
+  };
+}
+
+function buildReportLeaderboardData(data) {
+  var total = Number(data.total) || 0;
+  var evaluated = Number(data.evaluated) || 0;
+  var coverage = total ? evaluated / total * 100 : 0;
+  var minimumCoverage = Number((leaderboardData.meta || {}).minimum_coverage) || 95;
+  var reportConfig = data.report_leaderboard || {};
+  var tools = (leaderboardData.tools || []).map(function(tool) {
+    return Object.assign({}, tool);
+  });
+  tools.push({
+    tool: reportConfig.tool_name || '本次转换工具（用户上传）',
+    avg_overall: Number((data.summary || {}).avg_overall) || 0,
+    dimension_avg: (data.summary || {}).dimension_avg || {},
+    category_stats: (data.summary || {}).category_stats || {},
+    score_distribution: scoreDistributionFromResults(data.results),
+    total: total,
+    evaluated: evaluated,
+    failed: Number(data.failed) || 0,
+    coverage: coverage,
+    eligible: coverage >= minimumCoverage,
+    benchmark_version: ((data.metadata || {}).version || 'current'),
+    updated_at: new Date().toISOString(),
+    tool_version: '本次上传',
+    errors: (data.errors || []).slice(0, 5),
+    is_user_result: true
+  });
+  return {
+    tools: tools,
+    meta: Object.assign({}, leaderboardData.meta || {})
+  };
+}
+
+function renderReportLeaderboard(data) {
+  var panel = document.getElementById('reportLeaderboardPanel');
+  if (data) {
+    if (!data.report_leaderboard || !data.report_leaderboard.enabled) {
+      reportLeaderboardData = null;
+      panel.hidden = true;
+      return;
+    }
+    reportLeaderboardData = buildReportLeaderboardData(data);
+  }
+  if (!reportLeaderboardData) {
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+  renderLeaderboardList(
+    'reportLeaderboardList',
+    reportLeaderboardData,
+    document.getElementById('reportLeaderboardSort').value
+  );
+}
+
+function renderLeaderboardList(listId, data, sortKey) {
+  var el = document.getElementById(listId);
+  var tools = (data.tools || []).slice();
   if (tools.length === 0) {
     el.replaceChildren(createLeaderboardElement('div', 'lb-empty', '暂无天梯榜数据'));
     return;
   }
 
-  var sortKey = document.getElementById('leaderboardSort').value;
   tools.sort(function(a, b) {
     if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
     return leaderboardScore(b, sortKey) - leaderboardScore(a, sortKey);
@@ -1736,6 +1927,7 @@ function renderLeaderboard() {
     var rank = tool.eligible ? officialRank : null;
     var score = leaderboardScore(tool, sortKey);
     var item = createLeaderboardElement('article', 'lb-item');
+    if (tool.is_user_result) item.classList.add('user-entry');
     var main = createLeaderboardElement('div', 'lb-main');
 
     var rankEl = createLeaderboardElement('span', 'lb-rank', rank || '—');
@@ -1747,6 +1939,7 @@ function renderLeaderboard() {
     var toolBlock = createLeaderboardElement('div', 'lb-tool');
     var name = createLeaderboardElement('div', 'lb-name', tool.tool);
     name.title = tool.tool;
+    if (tool.is_user_result) name.appendChild(createLeaderboardElement('span', 'lb-user-badge', '本次评测'));
     toolBlock.appendChild(name);
     toolBlock.appendChild(createLeaderboardElement(
       'div', 'lb-tool-version', tool.tool_version ? '工具版本 ' + tool.tool_version : '版本未记录'
@@ -1774,8 +1967,8 @@ function renderLeaderboard() {
     coverage.appendChild(createLeaderboardElement('span', '', tool.evaluated + '/' + tool.total + ' 成功'));
     main.appendChild(coverage);
 
-    var detailId = 'leaderboard-detail-' + officialRank + '-' + Math.random().toString(36).slice(2, 7);
-    var detail = buildLeaderboardDetail(tool, bestDistribution, sortKey);
+    var detailId = listId + '-detail-' + officialRank + '-' + Math.random().toString(36).slice(2, 7);
+    var detail = buildLeaderboardDetail(tool, bestDistribution, sortKey, tools);
     detail.id = detailId;
     detail.hidden = true;
     var expand = createLeaderboardElement('button', 'lb-expand', '详情 ▾');
@@ -1794,7 +1987,7 @@ function renderLeaderboard() {
   });
 }
 
-function buildLeaderboardDetail(tool, bestDistribution, sortKey) {
+function buildLeaderboardDetail(tool, bestDistribution, sortKey, comparisonTools) {
   var detail = createLeaderboardElement('div', 'lb-detail');
   var grid = createLeaderboardElement('div', 'lb-detail-grid');
   var dimensions = createLeaderboardElement('section', 'lb-detail-section');
@@ -1823,7 +2016,7 @@ function buildLeaderboardDetail(tool, bestDistribution, sortKey) {
     appendLeaderboardStat(stats, label + '（' + (pair[1].count || 0) + '）', formatLeaderboardNumber(pair[1].avg));
   });
   var close = sortKey === 'avg_overall' && distribution.ci95_high >= (bestDistribution.ci95_low || 101);
-  if (close && tool.avg_overall !== (leaderboardData.tools[0] || {}).avg_overall) {
+  if (close && tool.avg_overall !== (comparisonTools[0] || {}).avg_overall) {
     stats.appendChild(createLeaderboardElement('span', 'lb-close', '与领先工具表现区间重叠'));
   }
   if (tool.failed > 0) {
@@ -2032,6 +2225,9 @@ function renderResults(data) {
   document.getElementById('resultsHead').innerHTML = headHtml;
 
   const results = data.results || [];
+  document.getElementById('resultsDetailToggle').open = false;
+  document.getElementById('resultsDetailCount').textContent =
+    '共 ' + results.length + ' 份，点击展开';
   const body = document.getElementById('resultsBody');
   body.innerHTML = results.map(r => {
     const dims = {};
@@ -2048,6 +2244,8 @@ function renderResults(data) {
     }
     return '<tr>' + cells + '</tr>';
   }).join('');
+
+  renderReportLeaderboard(data);
 }
 
 function scoreClass(s) {

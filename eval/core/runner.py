@@ -67,14 +67,21 @@ class AsyncEvalRunner:
         """
         t_start = time.monotonic()
 
-        # ParseBench uses SIGALRM for timeouts on Linux. Signal handlers can
-        # only be installed from the main interpreter thread, so this phase
-        # must run synchronously on the event-loop thread. Batch ParseBench
-        # work is therefore intentionally serial in this compatibility mode.
-        pb_metrics: list[MetricValue] = self._parsebench.evaluate(
-            request.converted_md,
-            request.pdf_name,
-        )
+        # The pinned ParseBench release is thread-safe. Moving its blocking
+        # work off the event loop makes batch concurrency effective on both
+        # Windows and Linux. DOC_EVAL_THREADED=0 retains a serial compatibility
+        # mode for older third-party ParseBench builds that use signals.
+        if self._config.parsebench_threaded:
+            pb_metrics: list[MetricValue] = await asyncio.to_thread(
+                self._parsebench.evaluate,
+                request.converted_md,
+                request.pdf_name,
+            )
+        else:
+            pb_metrics = self._parsebench.evaluate(
+                request.converted_md,
+                request.pdf_name,
+            )
 
         # 2. Extract dimension scores from ParseBench metrics
         dimensions = self._extract_dimensions(pb_metrics)

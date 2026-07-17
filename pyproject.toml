@@ -9,6 +9,7 @@ description = "Document-to-Markdown conversion evaluation module"
 requires-python = ">=3.12"
 dependencies = [
     "parse-bench @ git+https://github.com/run-llama/ParseBench.git",
+    "numba>=0.60",
     "pymarkdownlnt",
 ]
 

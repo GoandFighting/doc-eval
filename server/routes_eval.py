@@ -17,6 +17,27 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_NEWBENCH_DATASET_ID = "newbench"
+_NEWBENCH_FULL_SIZE = 175
+
+
+def _is_full_newbench_submission(
+    dataset_id: str,
+    submitted_total: int,
+    submitted_names: list[str],
+    available_pdfs: set[str],
+    matched_pdfs: list[str],
+) -> bool:
+    """Return whether a submission exactly covers the complete newbench set."""
+    return (
+        dataset_id == _NEWBENCH_DATASET_ID
+        and len(available_pdfs) == _NEWBENCH_FULL_SIZE
+        and submitted_total == _NEWBENCH_FULL_SIZE
+        and all(Path(name).suffix.lower() == ".md" for name in submitted_names)
+        and len(matched_pdfs) == _NEWBENCH_FULL_SIZE
+        and set(matched_pdfs) == available_pdfs
+    )
+
 
 @router.post("/batch")
 async def eval_batch(
@@ -53,6 +74,7 @@ async def eval_batch(
 
     items: list[EvalRequest] = []
     skipped: list[dict[str, str]] = []
+    matched_pdfs: list[str] = []
 
     for f in files:
         md_name = f.filename or ""
@@ -68,6 +90,7 @@ async def eval_batch(
         content = f.file.read().decode("utf-8")
         content = content.replace("\r\n", "\n").replace("\r", "\n")
         items.append(EvalRequest(converted_md=content, pdf_name=pdf_name))
+        matched_pdfs.append(pdf_name)
 
     if not items:
         return {
@@ -85,4 +108,15 @@ async def eval_batch(
     for s in skipped:
         result["errors"].append(s)
     result["failed"] = response.failed + len(skipped)
+    result["report_leaderboard"] = {
+        "enabled": _is_full_newbench_submission(
+            dataset_id=dataset_id,
+            submitted_total=len(files),
+            submitted_names=[file.filename or "" for file in files],
+            available_pdfs=available_pdfs,
+            matched_pdfs=matched_pdfs,
+        ),
+        "dataset": dataset_id,
+        "tool_name": "本次转换工具（用户上传）",
+    }
     return result

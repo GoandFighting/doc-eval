@@ -2,8 +2,25 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    """Read a boolean environment flag with a safe default."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().casefold() not in {"0", "false", "no", "off"}
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    """Read a positive integer environment setting with a safe default."""
+    try:
+        return max(1, int(os.environ.get(name, default)))
+    except (TypeError, ValueError):
+        return default
 
 
 @dataclass
@@ -15,6 +32,7 @@ class EvalConfig:
     :param enable_l4: Enable L4 semantic similarity (sentence-transformers).
     :param enable_teds: Enable TEDS metric in ParseBench table evaluation.
     :param enable_grits: Enable GriTS metric in ParseBench table evaluation.
+    :param parsebench_threaded: Run ParseBench in worker threads so batches execute concurrently.
     :param weights: Dimension weights for overall score.
     :param semantic_model: sentence-transformers model name for L4.
     """
@@ -24,6 +42,9 @@ class EvalConfig:
     enable_l4: bool = False
     enable_teds: bool = True
     enable_grits: bool = True
+    parsebench_threaded: bool = field(
+        default_factory=lambda: _env_flag("DOC_EVAL_THREADED", True)
+    )
 
     weights: dict[str, float] = field(default_factory=lambda: {
         "content_faithfulness": 0.30,
@@ -34,7 +55,9 @@ class EvalConfig:
     })
 
     semantic_model: str = "paraphrase-multilingual-MiniLM-L12-v2"
-    batch_concurrency: int = 4
+    batch_concurrency: int = field(
+        default_factory=lambda: _env_positive_int("DOC_EVAL_BATCH_CONCURRENCY", 4)
+    )
 
     def active_weights(self, available_dimensions: set[str]) -> dict[str, float]:
         """Return weights for available dimensions, re-normalised to sum 1.

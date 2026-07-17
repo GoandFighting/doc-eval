@@ -2,12 +2,13 @@
 
 import asyncio
 import threading
+import time
 from pathlib import Path
 
 import pytest
 
 from eval.core.config import EvalConfig
-from eval.core.models import EvalRequest
+from eval.core.models import BatchEvalRequest, EvalRequest
 from eval.core.runner import AsyncEvalRunner
 
 
@@ -73,7 +74,7 @@ class TestAsyncEvalRunner:
         assert isinstance(d["dimensions"], list)
 
     def test_parsebench_evaluation_runs_on_main_thread(self, runner, monkeypatch):
-        """Linux signal-based timeouts require ParseBench on the main thread."""
+        """The compatibility mode keeps ParseBench on the main thread."""
         observed_threads = []
         pdf_name = runner.available_pdfs[0]
 
@@ -85,9 +86,56 @@ class TestAsyncEvalRunner:
         monkeypatch.setattr(runner._parsebench, "evaluate", fake_evaluate)
         monkeypatch.setattr(runner._parsebench, "expected_dimensions", lambda _: set())
 
-        asyncio.run(runner.evaluate(EvalRequest(converted_md="# test", pdf_name=pdf_name)))
+        previous = runner._config.parsebench_threaded
+        runner._config.parsebench_threaded = False
+        try:
+            asyncio.run(runner.evaluate(EvalRequest(converted_md="# test", pdf_name=pdf_name)))
+        finally:
+            runner._config.parsebench_threaded = previous
 
         assert observed_threads == [threading.main_thread()]
+
+    def test_windows_threaded_mode_runs_batch_parsebench_concurrently(self, runner, monkeypatch):
+        """Threaded mode must make the batch concurrency setting effective."""
+        active = 0
+        max_active = 0
+        lock = threading.Lock()
+        pdf_name = runner.available_pdfs[0]
+
+        def fake_evaluate(*_):
+            nonlocal active, max_active
+            with lock:
+                active += 1
+                max_active = max(max_active, active)
+            time.sleep(0.05)
+            with lock:
+                active -= 1
+            return []
+
+        monkeypatch.setattr(runner._parsebench, "evaluate", fake_evaluate)
+        monkeypatch.setattr(runner._parsebench, "expected_dimensions", lambda _: set())
+
+        previous_threaded = runner._config.parsebench_threaded
+        previous_concurrency = runner._config.batch_concurrency
+        runner._config.parsebench_threaded = True
+        runner._config.batch_concurrency = 4
+        try:
+            response = asyncio.run(
+                runner.evaluate_batch(
+                    BatchEvalRequest(
+                        items=[
+                            EvalRequest(converted_md=f"# test {index}", pdf_name=pdf_name)
+                            for index in range(4)
+                        ]
+                    )
+                )
+            )
+        finally:
+            runner._config.parsebench_threaded = previous_threaded
+            runner._config.batch_concurrency = previous_concurrency
+
+        assert response.evaluated == 4
+        assert max_active >= 2
 
     def test_missing_parsebench_dimension_is_reported(self, runner, monkeypatch):
         """Partial ParseBench output must be explicit in the API response."""

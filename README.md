@@ -29,6 +29,22 @@ python -m uvicorn server.app:app --reload --port 8000
 
 浏览器打开 http://localhost:8000
 
+### Linux / Ubuntu 并发配置
+
+批量评测在 Windows 和 Linux 上均默认启用文档级线程并发，并在进程内计算
+TEDS/GriTS，避免为每份表格文档创建嵌套进程池。默认并发数为 4，可按服务器
+CPU 和内存调整：
+
+```bash
+# Ubuntu 示例：4 路并发（默认值）
+export DOC_EVAL_BATCH_CONCURRENCY=4
+python -m uvicorn server.app:app --host 0.0.0.0 --port 8000
+```
+
+兼容性开关：`DOC_EVAL_THREADED=0` 可恢复串行调度；
+`DOC_EVAL_INLINE_TABLE_METRICS=0` 可恢复 ParseBench 自带的表格指标进程池。
+生产环境通常保持两个优化开关的默认值即可。
+
 ### 命令行评测
 
 ```bash
