@@ -81,9 +81,15 @@ class DatasetRegistry:
     :param user_dir: Directory where user-uploaded datasets are stored.
     """
 
-    def __init__(self, builtin_dir: Path, user_dir: Path) -> None:
+    def __init__(
+        self,
+        builtin_dir: Path,
+        user_dir: Path,
+        builtin_process_workers: int = 0,
+    ) -> None:
         self._builtin_dir = builtin_dir
         self._user_dir = user_dir
+        self._builtin_process_workers = builtin_process_workers
         self._entries: dict[str, DatasetEntry] = {}
         self._user_dir.mkdir(parents=True, exist_ok=True)
         self._load_all()
@@ -117,7 +123,10 @@ class DatasetRegistry:
 
     def _create_entry(self, name: str, path: Path, is_builtin: bool) -> DatasetEntry:
         """Create a DatasetEntry with a fresh AsyncEvalRunner."""
-        config = EvalConfig(dataset_dir=path)
+        config = EvalConfig(
+            dataset_dir=path,
+            process_workers=self._builtin_process_workers if is_builtin else 0,
+        )
         runner = AsyncEvalRunner(config)
         if not runner.available_pdfs:
             raise ValueError(f"Dataset '{name}' contains no usable evaluation cases")

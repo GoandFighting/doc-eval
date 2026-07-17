@@ -19,6 +19,7 @@ from eval.core.models import (
     EvalRequest,
     EvalResponse,
 )
+from eval.core.process_pool import PersistentEvalProcessPool
 from eval.metrics.normalize import to_100
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class AsyncEvalRunner:
         )
         self._l1: Any = None
         self._l4: Any = None
+        self._process_pool: PersistentEvalProcessPool | None = None
 
     @property
     def available_pdfs(self) -> list[str]:
@@ -299,27 +301,35 @@ class AsyncEvalRunner:
     async def evaluate_batch(self, request: BatchEvalRequest) -> BatchEvalResponse:
         """Run evaluation for multiple documents concurrently.
 
-        Uses a semaphore to limit concurrency and prevent memory exhaustion.
-        Individual failures are captured without aborting the batch.
+        The server may use a persistent process pool so Linux ParseBench runs
+        concurrently while retaining signal support. Other configurations use
+        the existing bounded in-process path. Individual failures are captured
+        without aborting the batch.
 
         :param request: Batch request with multiple EvalRequest items.
         :return: Batch response with results, errors, and summary.
         """
-        sem = asyncio.Semaphore(self._config.batch_concurrency)
+        if self._config.process_workers > 0:
+            await self.start()
+            if self._process_pool is None:
+                raise RuntimeError("Persistent evaluation process pool failed to start")
+            raw_results = await self._process_pool.evaluate(request.items)
+        else:
+            sem = asyncio.Semaphore(self._config.batch_concurrency)
 
-        async def _eval_one(req: EvalRequest) -> EvalResponse:
-            async with sem:
-                return await self.evaluate(req)
+            async def _eval_one(req: EvalRequest) -> EvalResponse:
+                async with sem:
+                    return await self.evaluate(req)
 
-        tasks = [_eval_one(item) for item in request.items]
-        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+            tasks = [_eval_one(item) for item in request.items]
+            raw_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         results: list[EvalResponse] = []
         errors: list[dict[str, str]] = []
         warnings: list[dict[str, str]] = []
 
         for req, raw in zip(request.items, raw_results, strict=False):
-            if isinstance(raw, Exception):
+            if isinstance(raw, BaseException):
                 errors.append({"pdf_name": req.pdf_name, "error": str(raw)})
             else:
                 results.append(raw)
@@ -339,6 +349,23 @@ class AsyncEvalRunner:
             warnings=warnings,
             summary=summary,
         )
+
+    async def start(self) -> None:
+        """Start and warm the configured persistent process pool."""
+        if self._config.process_workers <= 0:
+            return
+        if self._process_pool is None:
+            self._process_pool = PersistentEvalProcessPool(
+                config=self._config,
+                max_workers=self._config.process_workers,
+            )
+        await self._process_pool.start()
+
+    async def close(self) -> None:
+        """Shut down persistent evaluation workers."""
+        if self._process_pool is not None:
+            await self._process_pool.close()
+            self._process_pool = None
 
     def _build_summary(self, results: list[EvalResponse]) -> BatchSummary:
         """Build aggregated statistics from successful results.

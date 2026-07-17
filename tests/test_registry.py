@@ -70,6 +70,20 @@ class TestDatasetRegistry:
         assert entry.is_builtin is True
         assert entry.name == "newbench"
 
+    def test_process_pool_is_enabled_only_for_builtin_dataset(self, temp_dirs):
+        """Custom datasets retain the existing serial compatibility path."""
+        builtin_dir, user_dir = temp_dirs
+        registry = DatasetRegistry(
+            builtin_dir=builtin_dir,
+            user_dir=user_dir,
+            builtin_process_workers=2,
+        )
+        custom_path = _make_dataset_dir(user_dir, "custom", "custom.pdf")
+        custom = registry.register(name="custom", path=custom_path)
+
+        assert registry.get("newbench").runner._config.process_workers == 2
+        assert custom.runner._config.process_workers == 0
+
     def test_list_all_returns_builtin_first(self, registry):
         """list_all should return built-in datasets first."""
         all_ds = registry.list_all()

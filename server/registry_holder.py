@@ -9,10 +9,18 @@ from eval.core.registry import DatasetRegistry
 _registry: DatasetRegistry | None = None
 
 
-def init_registry(builtin_dir: Path, user_dir: Path) -> DatasetRegistry:
+def init_registry(
+    builtin_dir: Path,
+    user_dir: Path,
+    builtin_process_workers: int = 0,
+) -> DatasetRegistry:
     """Initialise the global registry. Call once at startup."""
     global _registry
-    _registry = DatasetRegistry(builtin_dir=builtin_dir, user_dir=user_dir)
+    _registry = DatasetRegistry(
+        builtin_dir=builtin_dir,
+        user_dir=user_dir,
+        builtin_process_workers=builtin_process_workers,
+    )
     return _registry
 
 

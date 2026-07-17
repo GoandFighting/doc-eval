@@ -137,6 +137,55 @@ class TestAsyncEvalRunner:
         assert response.evaluated == 4
         assert max_active >= 2
 
+    def test_batch_uses_configured_persistent_process_pool(self, runner):
+        """The process-pool path preserves batch aggregation and lifecycle."""
+        pdf_name = runner.available_pdfs[0]
+
+        class FakePool:
+            def __init__(self):
+                self.started = 0
+                self.closed = 0
+
+            async def start(self):
+                self.started += 1
+
+            async def evaluate(self, items):
+                return [
+                    type("Response", (), {
+                        "pdf_name": item.pdf_name,
+                        "warnings": [],
+                        "overall_score": 80.0,
+                        "dimensions": [],
+                    })()
+                    for item in items
+                ]
+
+            async def close(self):
+                self.closed += 1
+
+        fake_pool = FakePool()
+        previous_workers = runner._config.process_workers
+        previous_pool = runner._process_pool
+        runner._config.process_workers = 2
+        runner._process_pool = fake_pool
+        try:
+            response = asyncio.run(
+                runner.evaluate_batch(
+                    BatchEvalRequest(
+                        items=[EvalRequest(converted_md="# test", pdf_name=pdf_name)]
+                    )
+                )
+            )
+            asyncio.run(runner.close())
+        finally:
+            runner._config.process_workers = previous_workers
+            runner._process_pool = previous_pool
+
+        assert response.evaluated == 1
+        assert response.failed == 0
+        assert fake_pool.started == 1
+        assert fake_pool.closed == 1
+
     def test_missing_parsebench_dimension_is_reported(self, runner, monkeypatch):
         """Partial ParseBench output must be explicit in the API response."""
         pdf_name = runner.available_pdfs[0]

@@ -31,13 +31,20 @@ python -m uvicorn server.app:app --reload --port 8000
 
 ### Linux / Ubuntu 运行配置
 
-ParseBench 在 Linux 上使用 signal 实现规则超时，因此必须在 Python 主线程执行；
-系统会在 Ubuntu 上自动使用主线程兼容模式。TEDS/GriTS 仍在进程内计算并使用
-Numba 加速，避免为每份表格文档创建嵌套进程池：
+ParseBench 在 Linux 上使用 signal 实现规则超时，因此必须在 Python 主线程执行。
+服务在 Ubuntu 上默认预热 **2 个持久化评测子进程**；每个子进程都在自己的主线程
+执行 ParseBench，既兼容 signal，又能让多份文档并行评测。进程会跨批次复用，避免
+为 175 份文档反复启动进程和加载规则。TEDS/GriTS 仍在进程内计算并使用 Numba 加速。
 
 ```bash
+# 4 核 8G 推荐保持 2；不设置时 Ubuntu 默认也是 2
+export DOC_EVAL_PROCESS_WORKERS=2
 python -m uvicorn server.app:app --host 0.0.0.0 --port 8000
 ```
+
+`DOC_EVAL_PROCESS_WORKERS=0` 可关闭进程池并恢复串行评测。4 核 8G 不建议超过 2，
+否则主服务、Numba 和多个评测进程会争抢 CPU 与内存。Uvicorn 应保持单 worker，
+不要再加 `--workers 4`，否则每个 Uvicorn worker 都会各建一套评测池。
 
 Ubuntu 不要设置 `DOC_EVAL_THREADED=1`，否则 ParseBench 会报 signal 只能在主线程
 运行。Windows 默认启用文档级线程并发，并可通过 `DOC_EVAL_BATCH_CONCURRENCY`
