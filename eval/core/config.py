@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -43,7 +44,7 @@ class EvalConfig:
     enable_teds: bool = True
     enable_grits: bool = True
     parsebench_threaded: bool = field(
-        default_factory=lambda: _env_flag("DOC_EVAL_THREADED", True)
+        default_factory=lambda: _env_flag("DOC_EVAL_THREADED", sys.platform == "win32")
     )
 
     weights: dict[str, float] = field(default_factory=lambda: {

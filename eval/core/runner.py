@@ -67,10 +67,10 @@ class AsyncEvalRunner:
         """
         t_start = time.monotonic()
 
-        # The pinned ParseBench release is thread-safe. Moving its blocking
-        # work off the event loop makes batch concurrency effective on both
-        # Windows and Linux. DOC_EVAL_THREADED=0 retains a serial compatibility
-        # mode for older third-party ParseBench builds that use signals.
+        # ParseBench uses signal-based rule timeouts on Linux, which must run
+        # on the main interpreter thread. Windows has no SIGALRM and can move
+        # the blocking work to worker threads so batch concurrency is effective.
+        # DOC_EVAL_THREADED remains an explicit compatibility override.
         if self._config.parsebench_threaded:
             pb_metrics: list[MetricValue] = await asyncio.to_thread(
                 self._parsebench.evaluate,
